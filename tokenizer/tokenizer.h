@@ -19,19 +19,35 @@ namespace c0 {
 		using uint64_t = std::uint64_t;
 
 		// 状态机的所有状态
+
+		/*这里更改一下，所有状态改为如下状态*/
+
 		enum DFAState {
-			INITIAL_STATE,
-			UNSIGNED_INTEGER_STATE,
-			PLUS_SIGN_STATE,
-			MINUS_SIGN_STATE,
-			DIVISION_SIGN_STATE,
-			MULTIPLICATION_SIGN_STATE,
-			IDENTIFIER_STATE,
-			EQUAL_SIGN_STATE,
-			SEMICOLON_STATE,
-			LEFTBRACKET_STATE,
-			RIGHTBRACKET_STATE
+			INITIAL_STATE,		//开始状态
+			ONE_CHAR_STATE,		//只有一个字符的状态
+			TWO_CHARS_STATE,	//只有两个字符的状态
+
+
+
+			UNSIGNED_INTEGER_STATE,	//无符号数（包含十进制、十六进制、浮点数）
+			
+			IDENTIFIER_STATE
 		};
+
+		
+		// enum DFAState {
+		// 	INITIAL_STATE,
+		// 	UNSIGNED_INTEGER_STATE,
+		// 	PLUS_SIGN_STATE,
+		// 	MINUS_SIGN_STATE,
+		// 	DIVISION_SIGN_STATE,
+		// 	MULTIPLICATION_SIGN_STATE,
+		// 	IDENTIFIER_STATE,
+		// 	EQUAL_SIGN_STATE,
+		// 	SEMICOLON_STATE,
+		// 	LEFTBRACKET_STATE,
+		// 	RIGHTBRACKET_STATE
+		// };
 	public:
 		Tokenizer(std::istream& ifs)
 			: _rdr(ifs), _initialized(false), _ptr(0, 0),_lines_buffer() {}
