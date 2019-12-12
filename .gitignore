@@ -1,8 +1,10 @@
 .vs
 .vscode
+.idea
 CMakeSettings.json
 *.plc0
 *.txt
 !CMakeLists.txt
 build
 out
+cmake-build-debug
