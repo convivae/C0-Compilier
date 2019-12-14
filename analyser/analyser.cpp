@@ -229,7 +229,7 @@ namespace c0 {
 			if (!next.has_value())
 				return {};
 			auto type = next.value().GetType();
-			if (type != TokenType::CONST && type != TokenType::VOID || type != TokenType::INT) {
+			if (type != TokenType::CONST && type != TokenType::VOID && type != TokenType::INT) {
 				unreadToken();
 				break;
 			}
