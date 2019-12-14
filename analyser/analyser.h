@@ -38,8 +38,19 @@ namespace c0 {
 		std::optional<CompilationError> analyseVariableDeclaration();
 		// <函数声明>
 		std::optional<CompilationError> analyseFunctionDeclaration();
+		// <参数从句>
+		std::optional<CompilationError> analyseParameterClause();
+		// <变量声明列表>
+		std::optional<CompilationError> analyseParameterDeclarationList();
+		// <变量声明>
+		std::optional<CompilationError> analyseParameterDeclaration();
+		std::optional<CompilationError> analyseCompoundStatement();
+		std::optional<CompilationError> analyseStatementSeq();
+		std::optional<CompilationError> analyseStatement();
 		// <初始化声明列表>
 		std::optional<CompilationError> analyseInitDeclaratorList();
+		// <表达式>
+		std::optional<CompilationError> analyseExpression();
 		
 		
 

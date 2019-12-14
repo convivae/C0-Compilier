@@ -9,7 +9,7 @@
 TEST_CASE("Token Base Test") {
 	std::string input =
 		"begin\n"
-		"	const b = 0x2147483647;\n"
+		"	const b == a > b <= c != a;\n"
 		"	var a = 1;\n"
 		"	print(a+b);\n"
 		"end\n";
@@ -40,6 +40,7 @@ TEST_CASE("Token Base Test") {
 	auto result = tkz.AllTokens();
 
 	if (result.second.has_value()) {
+		std::cout << result.second->GetCode() << std::endl;
 		FAIL();
 	}
 

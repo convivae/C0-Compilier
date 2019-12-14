@@ -35,7 +35,8 @@ namespace c0 {
 		ErrDuplicateDeclaration,
 		ErrNotInitialized,
 		ErrInvalidAssignment,
-		ErrInvalidPrint
+		ErrInvalidPrint,
+		ErrIncompleteBrackets,	//不完整的括号
 	};
 
 	class CompilationError final{

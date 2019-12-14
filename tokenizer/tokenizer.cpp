@@ -150,25 +150,26 @@ namespace c0 {
 
 							  // 当前状态是整数时
 			case NUMBER_STATE: {
-				unreadLast();
-				
-				if (current_char.value() == '0') {
-					auto next = nextChar();
-					if (!next.has_value()) {
+				if (ss.str().at(0) == '0') {
+					if (!current_char.has_value()) {//文件末尾
 						return std::make_pair(std::make_optional<Token>(TokenType::DECIMAL_INTEGER, 0, pos, currentPos()), std::optional<CompilationError>());
 					}
-					else if (charInString(next.value(), "xX")) {
+					else if (charInString(current_char.value(), "xX")) {
+						ss << current_char.value();
 						current_state = DFAState::HEXADECIMAL_STATE;
 					}
-					else if (charInString(next.value(), "0123456789.eE")) {
+					else if (charInString(current_char.value(), "0123456789.eE")) {
+						ss << current_char.value();
 						current_state = DFAState::FLOATING_POINT_STATE;
 					}
 					else {//十进制 0
+						unreadLast();
 						return std::make_pair(std::make_optional<Token>(TokenType::DECIMAL_INTEGER, 0, pos, currentPos()), std::optional<CompilationError>());
 					}
 				}
 				else {
 					//TODO 此处未考虑浮点数
+					ss << current_char.value();
 					current_state = DFAState::DECIMAL_STATE;
 				}
 				break;
@@ -207,9 +208,13 @@ namespace c0 {
 				//     解析成功则返回无符号整数类型的token，否则返回编译错误
 				break;
 			}
+			case FLOATING_POINT_STATE: {
+				//TODO 留待扩展C0处理
+				return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrIntegerOverflow));
+			}
 
 			case HEXADECIMAL_STATE: {
-				if (!current_char.has_value()) {
+				if (!current_char.has_value()) {//十六进制转成十进制返回
 					std::string int_str;
 					ss >> int_str;
 					auto int_value = strtoll(int_str.c_str(), NULL, 16);
@@ -224,6 +229,11 @@ namespace c0 {
 				if (isHexCharacter(ch)) {
 					ss << ch;
 				}
+				// 如果读到的是字母，则存储读到的字符，并切换状态到标识符
+				else if (c0::isalpha(ch)) {
+					ss << ch;
+					current_state = DFAState::IDENTIFIER_STATE;
+				}
 				// 如果读到的字符不是上述情况之一，则回退读到的字符，并解析已经读到的字符串为整数
 				else {
 					unreadLast();
@@ -233,7 +243,7 @@ namespace c0 {
 					if (int_value > INT32_MAX || int_value < INT32_MIN) {
 						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrIntegerOverflow));
 					}
-					return std::make_pair(std::make_optional<Token>(TokenType::HEXADECIMAL_INTEGER, int_str, pos, currentPos()), std::optional<CompilationError>());
+					return std::make_pair(std::make_optional<Token>(TokenType::HEXADECIMAL_INTEGER, std::to_string(int_value), pos, currentPos()), std::optional<CompilationError>());
 				}
 				break;
 			}
