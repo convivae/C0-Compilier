@@ -77,7 +77,7 @@ namespace c0 {
 				else if (!c0::isprint(ch)) // control codes and backspace
 					invalid = true;
 				else if (c0::isdigit(ch)) // 读到的字符是数字
-					current_state = DFAState::UNSIGNED_INTEGER_STATE; // 切换到无符号整数的状态
+					current_state = DFAState::NUMBER_STATE; // 切换到数字状态
 				else if (c0::isalpha(ch)) // 读到的字符是英文字母
 					current_state = DFAState::IDENTIFIER_STATE; // 切换到标识符的状态
 				else {
@@ -94,24 +94,37 @@ namespace c0 {
 						current_state = DFAState::PLUS_SIGN_STATE;
 						break;
 					case '*':
-						// 请填空：切换状态
 						current_state = DFAState::MULTIPLICATION_SIGN_STATE;
 						break;
 					case '/':
-						// 请填空：切换状态
 						current_state = DFAState::DIVISION_SIGN_STATE;
 						break;
-						///// 请填空：
-						///// 对于其他的可接受字符
-						///// 切换到对应的状态
+					case '<':
+						current_state = DFAState::LESS_SIGN_STATE;
+						break;
+					case '>':
+						current_state = DFAState::ABOVE_SIGN_STATE;
+						break;
+					case '!':
+						current_state = DFAState::EXCLAMATION_SIGN_STATE;
+						break;
 					case ';':
 						current_state = DFAState::SEMICOLON_STATE;
 						break;
+					case ',':
+						current_state = DFAState::COMMA_STATE;
+						break;
 					case '(':
-						current_state = DFAState::LEFTBRACKET_STATE;
+						current_state = DFAState::LEFT_PARENTHESIS_STATE;
 						break;
 					case ')':
-						current_state = DFAState::RIGHTBRACKET_STATE;
+						current_state = DFAState::RIGHT_PARENTHESIS_STATE;
+						break;
+					case '{':
+						current_state = DFAState::LEFT_BRACE_STATE;
+						break;
+					case '}':
+						current_state = DFAState::RIGHT_BRACE_STATE;
 						break;
 						// 不接受的字符导致的不合法的状态
 					default:
@@ -135,9 +148,32 @@ namespace c0 {
 				break;
 			}
 
-							  // 当前状态是无符号整数
-			case UNSIGNED_INTEGER_STATE: {
-				// 请填空：
+							  // 当前状态是整数时
+			case NUMBER_STATE: {
+				unreadLast();
+				
+				if (current_char.value() == '0') {
+					auto next = nextChar();
+					if (!next.has_value()) {
+						return std::make_pair(std::make_optional<Token>(TokenType::DECIMAL_INTEGER, 0, pos, currentPos()), std::optional<CompilationError>());
+					}
+					else if (charInString(next.value(), "xX")) {
+						current_state = DFAState::HEXADECIMAL_STATE;
+					}
+					else if (charInString(next.value(), "0123456789.eE")) {
+						current_state = DFAState::FLOATING_POINT_STATE;
+					}
+					else {//十进制 0
+						return std::make_pair(std::make_optional<Token>(TokenType::DECIMAL_INTEGER, 0, pos, currentPos()), std::optional<CompilationError>());
+					}
+				}
+				else {
+					//TODO 此处未考虑浮点数
+					current_state = DFAState::DECIMAL_STATE;
+				}
+				break;
+			}
+			case DECIMAL_STATE: {
 				// 如果当前已经读到了文件尾，则解析已经读到的字符串为整数
 				if (!current_char.has_value()) {
 					int32_t int_value;
@@ -145,7 +181,7 @@ namespace c0 {
 					if (ss.fail() || ss.bad())
 						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrIntegerOverflow));
 
-					return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER, std::to_string(int_value), pos, currentPos()), std::optional<CompilationError>());
+					return std::make_pair(std::make_optional<Token>(TokenType::DECIMAL_INTEGER, std::to_string(int_value), pos, currentPos()), std::optional<CompilationError>());
 				}
 				auto ch = current_char.value();
 
@@ -166,11 +202,42 @@ namespace c0 {
 					if (ss.fail() || ss.bad())
 						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrIntegerOverflow));
 
-					return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER, std::to_string(int_value), pos, currentPos()), std::optional<CompilationError>());
+					return std::make_pair(std::make_optional<Token>(TokenType::DECIMAL_INTEGER, std::to_string(int_value), pos, currentPos()), std::optional<CompilationError>());
 				}
 				//     解析成功则返回无符号整数类型的token，否则返回编译错误
 				break;
 			}
+
+			case HEXADECIMAL_STATE: {
+				if (!current_char.has_value()) {
+					std::string int_str;
+					ss >> int_str;
+					auto int_value = strtoll(int_str.c_str(), NULL, 16);
+					if (int_value > INT32_MAX || int_value < INT32_MIN) {
+						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrIntegerOverflow));
+					}
+					return std::make_pair(std::make_optional<Token>(TokenType::HEXADECIMAL_INTEGER, std::to_string(int_value), pos, currentPos()), std::optional<CompilationError>());
+				}
+				auto ch = current_char.value();
+
+				// 如果读到的字符是符合规范的十六进制字符，则存储读到的字符
+				if (isHexCharacter(ch)) {
+					ss << ch;
+				}
+				// 如果读到的字符不是上述情况之一，则回退读到的字符，并解析已经读到的字符串为整数
+				else {
+					unreadLast();
+					std::string int_str;
+					ss >> int_str;
+					auto int_value = strtoll(int_str.c_str(), NULL, 16);
+					if (int_value > INT32_MAX || int_value < INT32_MIN) {
+						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrIntegerOverflow));
+					}
+					return std::make_pair(std::make_optional<Token>(TokenType::HEXADECIMAL_INTEGER, int_str, pos, currentPos()), std::optional<CompilationError>());
+				}
+				break;
+			}
+
 			case IDENTIFIER_STATE: {
 				// 请填空：
 				// 如果当前已经读到了文件尾，则解析已经读到的字符串
@@ -178,21 +245,12 @@ namespace c0 {
 					//     如果解析结果是关键字，那么返回对应关键字的token，否则返回标识符的token
 					std::string str_value;
 					ss >> str_value;
-					if (str_value == "begin") {
-						return std::make_pair(std::make_optional<Token>(TokenType::BEGIN, str_value, pos, currentPos()), std::optional<CompilationError>());
+
+					auto tmp_token = dealReservedWord(str_value);
+					if (tmp_token.has_value()) {
+						return std::make_pair(std::make_optional<Token>(tmp_token.value(), str_value, pos, currentPos()), std::optional<CompilationError>());
 					}
-					if (str_value == "end") {
-						return std::make_pair(std::make_optional<Token>(TokenType::END, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
-					if (str_value == "var") {
-						return std::make_pair(std::make_optional<Token>(TokenType::VAR, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
-					if (str_value == "const") {
-						return std::make_pair(std::make_optional<Token>(TokenType::CONST, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
-					if (str_value == "print") {
-						return std::make_pair(std::make_optional<Token>(TokenType::PRINT, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
+
 					return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER, str_value, pos, currentPos()), std::optional<CompilationError>());
 				}
 
@@ -208,25 +266,75 @@ namespace c0 {
 					//     如果解析结果是关键字，那么返回对应关键字的token，否则返回标识符的token
 					std::string str_value;
 					ss >> str_value;
-					if (str_value == "begin") {
-						return std::make_pair(std::make_optional<Token>(TokenType::BEGIN, str_value, pos, currentPos()), std::optional<CompilationError>());
+
+					auto tmp_token = dealReservedWord(str_value);
+					if (tmp_token.has_value()) {
+						return std::make_pair(std::make_optional<Token>(tmp_token.value(), str_value, pos, currentPos()), std::optional<CompilationError>());
 					}
-					if (str_value == "end") {
-						return std::make_pair(std::make_optional<Token>(TokenType::END, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
-					if (str_value == "var") {
-						return std::make_pair(std::make_optional<Token>(TokenType::VAR, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
-					if (str_value == "const") {
-						return std::make_pair(std::make_optional<Token>(TokenType::CONST, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
-					if (str_value == "print") {
-						return std::make_pair(std::make_optional<Token>(TokenType::PRINT, str_value, pos, currentPos()), std::optional<CompilationError>());
-					}
+
 					return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER, str_value, pos, currentPos()), std::optional<CompilationError>());
 				}
 				break;
 			}
+			case EQUAL_SIGN_STATE: {
+				auto ch = current_char.value();
+				
+				if(ch != '=') {
+					unreadLast();
+					return std::make_pair(std::make_optional<Token>(TokenType::EQUAL_SIGN, '=', pos, currentPos()), std::optional<CompilationError>());
+				}
+				else {
+					ss << ch;
+					std::string str_value;
+					ss >> str_value;
+					return std::make_pair(std::make_optional<Token>(TokenType::EQUAL_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
+				}
+			}
+			case LESS_SIGN_STATE: {
+				auto ch = current_char.value();
+
+				if (ch != '=') {
+					unreadLast();
+					return std::make_pair(std::make_optional<Token>(TokenType::LESS_SIGN, '<', pos, currentPos()), std::optional<CompilationError>());
+				}
+				else {
+					ss << ch;
+					std::string str_value;
+					ss >> str_value;
+					return std::make_pair(std::make_optional<Token>(TokenType::LESS_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
+				}
+			}
+
+			case ABOVE_SIGN_STATE: {
+				auto ch = current_char.value();
+
+				if (ch != '=') {
+					unreadLast();
+					return std::make_pair(std::make_optional<Token>(TokenType::ABOVE_SIGN, '>', pos, currentPos()), std::optional<CompilationError>());
+				}
+				else {
+					ss << ch;
+					std::string str_value;
+					ss >> str_value;
+					return std::make_pair(std::make_optional<Token>(TokenType::ABOVE_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
+				}
+			}
+
+			case EXCLAMATION_SIGN_STATE: {
+				auto ch = current_char.value();
+
+				if (ch != '=') {	//如果感叹号后面没有跟等于号，直接报错
+					unreadLast();
+					return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrInvalidInput));
+				}
+				else {
+					ss << ch;
+					std::string str_value;
+					ss >> str_value;
+					return std::make_pair(std::make_optional<Token>(TokenType::NOT_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
+				}
+			}
+
 
 								 // 如果当前状态是加号
 			case PLUS_SIGN_STATE: {
@@ -240,34 +348,39 @@ namespace c0 {
 				unreadLast(); // Yes, we unread last char even if it's an EOF.
 				return std::make_pair(std::make_optional<Token>(TokenType::MINUS_SIGN, '-', pos, currentPos()), std::optional<CompilationError>());
 			}
-								 // 请填空：
-								 // 对于其他的合法状态，进行合适的操作
-								 // 比如进行解析、返回token、返回编译错误
 			case MULTIPLICATION_SIGN_STATE: {
-				unreadLast(); // Yes, we unread last char even if it's an EOF.
+				unreadLast();
 				return std::make_pair(std::make_optional<Token>(TokenType::MULTIPLICATION_SIGN, '*', pos, currentPos()), std::optional<CompilationError>());
 			}
 			case DIVISION_SIGN_STATE: {
-				unreadLast(); // Yes, we unread last char even if it's an EOF.
+				unreadLast();
 				return std::make_pair(std::make_optional<Token>(TokenType::DIVISION_SIGN, '/', pos, currentPos()), std::optional<CompilationError>());
 			}
-			case EQUAL_SIGN_STATE: {
-				unreadLast(); // Yes, we unread last char even if it's an EOF.
-				return std::make_pair(std::make_optional<Token>(TokenType::EQUAL_SIGN, '=', pos, currentPos()), std::optional<CompilationError>());
-			}
 			case SEMICOLON_STATE: {
-				unreadLast(); // Yes, we unread last char even if it's an EOF.
+				unreadLast();
 				return std::make_pair(std::make_optional<Token>(TokenType::SEMICOLON, ';', pos, currentPos()), std::optional<CompilationError>());
 			}
-			case LEFTBRACKET_STATE: {
-				unreadLast(); // Yes, we unread last char even if it's an EOF.
-				return std::make_pair(std::make_optional<Token>(TokenType::LEFT_BRACKET, '(', pos, currentPos()), std::optional<CompilationError>());
+			case LEFT_PARENTHESIS_STATE: {
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::LEFT_PARENTHESIS, '(', pos, currentPos()), std::optional<CompilationError>());
 			}
-			case RIGHTBRACKET_STATE: {
-				unreadLast(); // Yes, we unread last char even if it's an EOF.
-				return std::make_pair(std::make_optional<Token>(TokenType::RIGHT_BRACKET, ')', pos, currentPos()), std::optional<CompilationError>());
+			case RIGHT_PARENTHESIS_STATE: {
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::RIGHT_PARENTHESIS, ')', pos, currentPos()), std::optional<CompilationError>());
 			}
-								   // 预料之外的状态，如果执行到了这里，说明程序异常
+			case LEFT_BRACE_STATE: {
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::LEFT_BRACE, '{', pos, currentPos()), std::optional<CompilationError>());
+			}
+			case RIGHT_BRACE_STATE: {
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::RIGHT_BRACE, '}', pos, currentPos()), std::optional<CompilationError>());
+			}
+			case COMMA_STATE: {
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::COMMA, ',', pos, currentPos()), std::optional<CompilationError>());
+			}
+							// 预料之外的状态，如果执行到了这里，说明程序异常
 			default:
 				DieAndPrint("unhandled state.");
 				break;
@@ -279,12 +392,12 @@ namespace c0 {
 
 	std::optional<CompilationError> Tokenizer::checkToken(const Token& t) {
 		switch (t.GetType()) {
-			case IDENTIFIER: {
-				auto val = t.GetValueString();
-				if (c0::isdigit(val[0]))
-					return std::make_optional<CompilationError>(t.GetStartPos().first, t.GetStartPos().second, ErrorCode::ErrInvalidIdentifier);
-				break;
-			}
+		case IDENTIFIER: {
+			auto val = t.GetValueString();
+			if (c0::isdigit(val[0]))
+				return std::make_optional<CompilationError>(t.GetStartPos().first, t.GetStartPos().second, ErrorCode::ErrInvalidIdentifier);
+			break;
+		}
 		default:
 			break;
 		}
@@ -339,5 +452,58 @@ namespace c0 {
 	// Note: Is it evil to unread a buffer?
 	void Tokenizer::unreadLast() {
 		_ptr = previousPos();
+	}
+
+	std::optional<TokenType> Tokenizer::dealReservedWord(const std::string& s) {
+		if (s == "const")
+			return TokenType::CONST;
+		if (s == "void")
+			return TokenType::VOID;
+		if (s == "int")
+			return TokenType::INT;
+		if (s == "char")
+			return TokenType::CHAR;
+		if (s == "double")
+			return TokenType::DOUBLE;
+		if (s == "struct")
+			return TokenType::STRUCT;
+		if (s == "if")
+			return TokenType::IF;
+		if (s == "else")
+			return TokenType::ELSE;
+		if (s == "switch")
+			return TokenType::SWITCH;
+		if (s == "case")
+			return TokenType::CASE;
+		if (s == "default")
+			return TokenType::DEFAULT;
+		if (s == "while")
+			return TokenType::WHILE;
+		if (s == "for")
+			return TokenType::FOR;
+		if (s == "do")
+			return TokenType::DO;
+		if (s == "return")
+			return TokenType::RETURN;
+		if (s == "break")
+			return TokenType::BREAK;
+		if (s == "continue")
+			return TokenType::CONTINUE;
+		if (s == "print")
+			return TokenType::PRINT;
+		if (s == "scan")
+			return TokenType::SCAN;
+		return {};
+	}
+
+	bool Tokenizer::charInString(const char c, std::string s)
+	{
+		return s.find(c) != std::string::npos;
+	}
+
+	bool Tokenizer::isHexCharacter(char c)
+	{
+		std::string hex = "0123456789abcdefABCDEF";
+		return charInString(c, hex);
 	}
 }

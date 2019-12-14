@@ -20,34 +20,36 @@ namespace c0 {
 
 		// 状态机的所有状态
 
-		/*这里更改一下，所有状态改为如下状态*/
+		 enum DFAState {
+		 	INITIAL_STATE,
+		 	NUMBER_STATE,
+		 	DECIMAL_STATE,			//十进制
+		 	HEXADECIMAL_STATE,		//十六进制
+		 	FLOATING_POINT_STATE,	//浮点数
+		 	IDENTIFIER_STATE,
 
-		enum DFAState {
-			INITIAL_STATE,		//开始状态
-			ONE_CHAR_STATE,		//只有一个字符的状态
-			TWO_CHARS_STATE,	//只有两个字符的状态
+		 	//运算符
+		 	PLUS_SIGN_STATE,
+		 	MINUS_SIGN_STATE,
+		 	MULTIPLICATION_SIGN_STATE,
+		 	DIVISION_SIGN_STATE,
+		 	EQUAL_SIGN_STATE,
 
+		 	//比较符号
+		 	LESS_SIGN_STATE,
+		 	ABOVE_SIGN_STATE,
+			EXCLAMATION_SIGN_STATE,		//感叹号 ！
 
-
-			UNSIGNED_INTEGER_STATE,	//无符号数（包含十进制、十六进制、浮点数）
-			
-			IDENTIFIER_STATE
-		};
-
-		
-		// enum DFAState {
-		// 	INITIAL_STATE,
-		// 	UNSIGNED_INTEGER_STATE,
-		// 	PLUS_SIGN_STATE,
-		// 	MINUS_SIGN_STATE,
-		// 	DIVISION_SIGN_STATE,
-		// 	MULTIPLICATION_SIGN_STATE,
-		// 	IDENTIFIER_STATE,
-		// 	EQUAL_SIGN_STATE,
-		// 	SEMICOLON_STATE,
-		// 	LEFTBRACKET_STATE,
-		// 	RIGHTBRACKET_STATE
-		// };
+		 	//符号
+		 	COMMA_STATE,
+		 	SEMICOLON_STATE,
+		 	LEFT_PARENTHESIS_STATE,     // (
+		 	RIGHT_PARENTHESIS_STATE,    // )
+//		 	LEFT_BRACKET_STATE,         // [
+//		 	RIGHT_BRACKET_STATE,        // ]
+		 	LEFT_BRACE_STATE,           // {
+		 	RIGHT_BRACE_STATE,          // }
+		 };
 	public:
 		Tokenizer(std::istream& ifs)
 			: _rdr(ifs), _initialized(false), _ptr(0, 0),_lines_buffer() {}
@@ -62,7 +64,7 @@ namespace c0 {
 	private:
 		// 检查 Token 的合法性
 		std::optional<CompilationError> checkToken(const Token&);
-		// 
+		//
 		// ** 你需要完成这个函数 **
 		//
 		// 返回下一个 token，是 NextToken 实际实现部分
@@ -95,6 +97,9 @@ namespace c0 {
 		std::optional<char> nextChar();
 		bool isEOF();
 		void unreadLast();
+        std::optional<TokenType> dealReservedWord(const std::string &s);
+		bool charInString(const char c, std::string s);
+		bool isHexCharacter(char c);
 	private:
 		std::istream& _rdr;
 		// 如果没有初始化，那么就 readAll

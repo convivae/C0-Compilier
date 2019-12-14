@@ -1,3 +1,60 @@
+- 需要识别的token：
+
+  > - <reserved-word> ::= 
+  >        'const'
+  >       |'void'   |'int'    |'char'   |'double'
+  >       |'struct'
+  >       |'if'     |'else'   
+  >       |'switch' |'case'   |'default'
+  >       |'while'  |'for'    |'do'
+  >       |'return' |'break'  |'continue' 
+  >       |'print'  |'scan'
+  >
+  > - 标识符（C0的标识符只支持数字和英文字母，且不能以数字开头。标识符区分大小写。）
+  >
+  > - 整数字面量：十进制整数字面量和十六进制整数字面量。（整数字面量不包含符号，但是其类型是有符号的`int`，这一点在有其他数据类型的情况下是需要注意的一点，后文会提到。非0的十进制整数字面量不能有任何前导0。）
+  >
+  > - 浮点数的小数点
+  >
+  > - 运算符与表达式
+  >
+  >   ```
+  >   <unary-operator>          ::= '+' | '-'
+  >   <additive-operator>       ::= '+' | '-'
+  >   <multiplicative-operator> ::= '*' | '/'
+  >   <relational-operator>     ::= '<' | '<=' | '>' | '>=' | '!=' | '=='
+  >   <assignment-operator>     ::= '='
+  >   ```
+  >
+  > - 其他符号
+  >
+  >   ```
+  >   ( ) ; , { }
+  >   ```
+  >
+  > - 注释
+  >
+  >   ```
+  >   <single-line-comment> ::=
+  >       '//' {<any-char>} (<LF>|<CR>)
+  >   <multi-line-comment> ::= 
+  >       '/*' {<any-char>} '*/'
+  >   ```
+  >
+  > 注释的分析**不遵循**最大吞噬规则：
+  >
+  > - 单行注释内容的分析遇到第一个 0x0A 或 0x0D 字节就立即结束
+  > - 多行注释内容的分析遇到第一个`*/`序列就立即结束
+  >
+  > 
+  >
+  > - ##### 字符字面量与字符串字面量
+
+- 语法分析处理的内容
+
+  > - 基础类指示符和一个常类型修饰符：这些关键字主要被显式地使用于[变量声明](https://github.com/BUAA-SE-Compiling/c0-handbook/blob/master)、[函数定义](https://github.com/BUAA-SE-Compiling/c0-handbook/blob/master)和[类型转换](https://github.com/BUAA-SE-Compiling/c0-handbook/blob/master)。
+  > - 
+
 - 修改词法分析和语法分析的read
 
 - C0 basic grammar
@@ -164,7 +221,7 @@
       |'return' |'break'  |'continue' 
       |'print'  |'scan'
   
-  // 新增
+  
   <char-liter> ::= 
       "'" (<c-char>|<escape-seq>) "'" 
   <string-literal> ::= 
@@ -173,7 +230,7 @@
         '\\' | "\'" | '\"' | '\n' | '\r' | '\t'
       | '\x'<hexadecimal-digit><hexadecimal-digit>
   
-  // 新增    
+      
   <sign> ::= 
       '+'|'-'
   <digit-seq> ::=
@@ -192,7 +249,7 @@
   <relational-operator>     ::= '<' | '<=' | '>' | '>=' | '!=' | '=='
   <assignment-operator>     ::= '='   
   
-  //新增    
+      
   <single-line-comment> ::=
       '//'{<any-char>}<LF>
   <multi-line-comment> ::= 
@@ -250,9 +307,8 @@
      
   <condition-statement> ::= 
        'if' '(' <condition> ')' <statement> ['else' <statement>]
-      |'switch' '(' <condition> ')' '{' {<labeled-statement>} '}'
-      
-  // 新增
+      |'switch' '(' <expression> ')' '{' {<labeled-statement>} '}'
+  
   <labeled-statement> ::= 
        'case' (<integer-literal>|<char-literal>) ':' <statement>
       |'default' ':' <statement>
@@ -262,7 +318,7 @@
       'while' '(' <condition> ')' <statement>
      |'do' <statement> 'while' '(' <condition> ')' ';'
      |'for' '('<for-init-statement> [<condition>]';' [<for-update-expression>]')' <statement>
-  // 新增
+  
   <for-init-statement> ::= 
       [<assignment-expression>{','<assignment-expression>}]';'
   <for-update-expression> ::=
@@ -283,7 +339,7 @@
   <printable-list>  ::= 
       <printable> {',' <printable>}
   <printable> ::= 
-      <expression> | <string-literal>		//新增
+      <expression> | <string-literal>
   
   <assignment-expression> ::= 
       <identifier><assignment-operator><expression>
@@ -297,7 +353,7 @@
   <multiplicative-expression> ::= 
        <cast-expression>{<multiplicative-operator><cast-expression>}
   <cast-expression> ::=
-      {'('<type-specifier>')'}<unary-expression>		// 新增
+      {'('<type-specifier>')'}<unary-expression>
   <unary-expression> ::=
       [<unary-operator>]<primary-expression>
   <primary-expression> ::=  
@@ -313,6 +369,6 @@
   <expression-list> ::= 
       <expression>{','<expression>}
   ```
-
   
+
 

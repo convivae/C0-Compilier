@@ -24,8 +24,7 @@ namespace c0 {
 		ErrInvalidInput,
 		ErrInvalidIdentifier,
 		ErrIntegerOverflow, // int32_t overflow.
-		ErrNoBegin,
-		ErrNoEnd,
+		ErrNeedTypeSpecifier,	//»±…Ÿ type-specifier
 		ErrNeedIdentifier,
 		ErrConstantNeedValue,
 		ErrNoSemicolon,

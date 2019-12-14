@@ -8,3 +8,4 @@ CMakeSettings.json
 build
 out
 cmake-build-debug
+grammar.md

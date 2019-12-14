@@ -10,24 +10,35 @@ namespace c0 {
 
 	enum TokenType {
 		NULL_TOKEN,
-		UNSIGNED_INTEGER,
+		DECIMAL_INTEGER,
+		HEXADECIMAL_INTEGER,
+		FLOATING_POINT,
 		IDENTIFIER,
-		//下面是标点符号和括号以及各种符号（长度为1）
+
+        //下面是运算符
+        PLUS_SIGN,
+        MINUS_SIGN,
+        MULTIPLICATION_SIGN,
+        DIVISION_SIGN,
+
+		//下面是标点符号
 		SEMICOLON,
-		LEFT_BRACKET,
-		RIGHT_BRACKET,
-		PLUS_SIGN,		//下面是运算符
-		MINUS_SIGN,
-		MULTIPLICATION_SIGN,
-		DIVISION_SIGN,
-		
+		COMMA,
+        LEFT_PARENTHESIS,   //小括号
+        RIGHT_PARENTHESIS,
+        LEFT_BRACE,         //大括号
+        RIGHT_BRACE,
+
+		//比较符号
 		EQUAL_SIGN,
 		LESS_SIGN,
 		ABOVE_SIGN,
+		EXCLAMATION_SIGN,	// 感叹号 !
 		LESS_EQUAL_SIGN,
 		ABOVE_EQUAL_SIGN,
 		EQUAL_EQUAL_SIGN,
 		NOT_EQUAL_SIGN,
+
 		//下面是保留字
 		CONST,
 		VOID,
