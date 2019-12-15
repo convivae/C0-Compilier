@@ -32,7 +32,7 @@ namespace c0 {
 	std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
 		//const
 		auto next = nextToken(); // [<const-qualifier>]
-		if(next.has_value() && next.value().GetType() == TokenType::CONST) {
+		if(!next.has_value() && next.value().GetType() == TokenType::CONST) {
 			next = nextToken();
 		}
 
@@ -268,7 +268,7 @@ namespace c0 {
 	}
 
 	//<statement> ::= 
-	// '{' < statement - seq > '}'
+	// '{' < statement-seq > '}'
 	// 	| <condition-statement>
 	// 	| <loop-statement>
 	// 	| <jump-statement>
@@ -278,11 +278,543 @@ namespace c0 {
 	// 	| <function-call>';'
 	// 	| ';'
 	std::optional<CompilationError> Analyser::analyseStatement() {
+		auto next = nextToken();
+		if (!next.has_value())
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidAssignment);
+		std::optional<CompilationError> err;
+		switch (next.value().GetType()) {
+		case TokenType::LEFT_BRACE:
+			err = analyseStatementSeq();
+			if (err.has_value())
+				return err;
+			// }
+			next = nextToken();
+			if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_BRACE)
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+			break;
+		case TokenType::IF:
+			unreadToken();
+			err = analyseConditionStatement();
+			if (err.has_value())
+				return err;
+			break;
 
+		case TokenType::WHILE:
+			unreadToken();
+			err = analyseLoopStatement();
+			if (err.has_value())
+				return err;
+			break;
+		case TokenType::RETURN:
+			unreadToken();
+			err = analyseJumpStatement();
+			if (err.has_value())
+				return err;
+			break;
+		case TokenType::PRINT:
+			unreadToken();
+			err = analysePrintStatement();
+			if (err.has_value())
+				return err;
+			break;
+		case TokenType::SCAN:
+			unreadToken();
+			err = analyseScanStatement();
+			if (err.has_value())
+				return err;
+			break;
+		case TokenType::IDENTIFIER:
+			next = nextToken();
+			if (!next.has_value())
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidAssignment);
+			if (next.value().GetType() == TokenType::EQUAL_SIGN) {
+				unreadToken();
+				unreadToken();
+				err = analyseAssignmentExpression();
+				if (err.has_value())
+					return err;
+				// ;
+				next = nextToken();
+				if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
+					return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
+			}
+			else if (next.value().GetType() == TokenType::LEFT_PARENTHESIS) {
+				unreadToken();
+				unreadToken();
+				err = analyseFunctionCall();
+				if (err.has_value())
+					return err;
+				// ;
+				next = nextToken();
+				if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
+					return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
+			}
+		case TokenType::SEMICOLON:
+			//TODO 汇编语句
+			break;
+		default:
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidAssignment);
+		}
 		return {};
 	}
 
+	//<condition> ::= <expression>[<relational-operator><expression>]
+	//<relational-operator> ::= '<' | '<=' | '>' | '>=' | '!=' | '=='
+	std::optional<CompilationError> Analyser::analyseCondition() {
+		auto err = analyseExpression();
+		if (err.has_value())
+			return err;
+
+		// [<relational-operator><expression>]
+		auto next = nextToken();
+		if (!next.has_value())
+			return {};
+		auto type = next.value().GetType();
+		switch (type) {
+		case TokenType::LESS_SIGN:
+			// TODO 分析出是 <，生成汇编
+		
+			break;
+		case TokenType::LESS_EQUAL_SIGN:
+			// TODO 分析出是 <=，生成汇编
+
+			break;
+		case TokenType::ABOVE_SIGN:
+			// TODO 分析出是 >，生成汇编
+
+			break;
+		case TokenType::ABOVE_EQUAL_SIGN:
+			// TODO 分析出是 >=，生成汇编
+
+			break;
+		case TokenType::NOT_EQUAL_SIGN:
+			// TODO 分析出是 !=，生成汇编
+
+			break;
+		case TokenType::EQUAL_EQUAL_SIGN:
+			// TODO 分析出是 ==，生成汇编
+			break;
+		default:	//说明没有可选部分
+			unreadToken();
+			return {};
+		}
+
+		err = analyseExpression();
+		if (err.has_value())
+			return err;
+		
+		return {};
+	}
+
+	// <assignment-expression> ::= <identifier><assignment-operator><expression>
+	// <assignment-operator> ::= '='
+	std::optional<CompilationError> Analyser::analyseAssignmentExpression() {
+		// <identifier>
+		auto next = nextToken();
+		if(!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
+
+		// <assignment-operator>
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::EQUAL_SIGN)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// <expression>
+		auto err = analyseExpression();
+		if (err.has_value())
+			return err;
+		return {};
+	}
+
+	// <scan-statement> ::= 'scan' '(' <identifier> ')' ';'
+	std::optional<CompilationError> Analyser::analyseScanStatement() {
+		// scan
+		auto next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::SCAN)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// (
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// <identifier>
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
+
+		// )
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+
+		// ;
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
+		//TODO 生成汇编
+		return {};
+	}
+
+	//<print-statement> ::= 'print' '('[<printable-list>] ')' ';'
+	std::optional<CompilationError> Analyser::analysePrintStatement() {
+		// print
+		auto next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::PRINT)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// (
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// [<printable-list>]
+		next = nextToken();
+		if (!next.has_value())
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+		else if(next.value().GetType() == TokenType::RIGHT_PARENTHESIS) {
+			unreadToken();
+		}
+		else {
+			auto err = analysePrintableList();
+			if (err.has_value())
+				return err;
+		}
+		
+		// )
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+
+		// ;
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
+		//TODO 生成汇编
+		return {};
+	}
+
+	// <printable-list>  ::= <printable> {',' < printable > }
+	std::optional<CompilationError> Analyser::analysePrintableList(){
+		//<printable>
+		auto err = analysePrintable();
+		if (err.has_value())
+			return err;
+
+		// {',' <printable> }
+		while (true) {
+			auto next = nextToken();
+			if (!next.has_value() || next.value().GetType() != TokenType::COMMA)
+				return {};
+			err = analysePrintable();
+			if (err.has_value())
+				return err;
+		}
+		
+		return {};
+	}
+
+	// <printable> :: = <expression>
+	std::optional<CompilationError> Analyser::analysePrintable() {
+		auto err = analyseExpression();
+		if (err.has_value())
+			return err;
+		//TODO 汇编在哪生成
+		return {};
+	}
+
+	//<jump-statement> ::= <return-statement>
+	std::optional<CompilationError> Analyser::analyseJumpStatement() {
+		auto err = analyseReturnStatement();
+		if (err.has_value())
+			return err;
+		return {};
+	}
+
+	//<return-statement> ::= 'return'[<expression>] ';'
+	std::optional<CompilationError> Analyser::analyseReturnStatement() {
+		// return
+		auto next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::RETURN)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// [<expression>] ';'
+		next = nextToken();
+		if(!next.has_value())
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+		if(next.value().GetType() != TokenType::SEMICOLON) { //说明存在可选项
+			auto err = analyseExpression();
+			if (err.has_value())
+				return err;
+			// ;
+			next = nextToken();
+			if(!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
+		}
+		// TODO 此句分析成功 生成汇编
+		
+		
+		return {};
+	}
+
+	// <loop-statement> ::= 
+	// 'while' '(' <condition> ')' <statement>
+	std::optional<CompilationError> Analyser::analyseLoopStatement() {
+		// while
+		auto next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::WHILE)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+		
+		// (
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// <condition>
+		auto err = analyseCondition();
+		if (err.has_value())
+			return err;
+
+		// )
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+
+		// <statement>
+		err = analyseStatement();
+		if (err.has_value())
+			return err;
+		return {};
+	}
+
+	// <condition-statement> :: =
+	// 'if' '(' < condition > ')' <statement> ['else' <statement>]
+	std::optional<CompilationError> Analyser::analyseConditionStatement() {
+		// if
+		auto next = nextToken();
+		if(!next.has_value() || next.value().GetType() != TokenType::IF)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// (
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// <condition>
+		auto err = analyseCondition();
+		if (err.has_value())
+			return err;
+
+		// )
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+
+		// <statement>
+		err = analyseStatement();
+		if (err.has_value())
+			return err;
+
+		// ['else' <statement> ]
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::ELSE)
+			return {};
+
+		// <statement>
+		err = analyseStatement();
+		if (err.has_value())
+			return err;
+		return  {};
+	}
+
+	// <expression> :: = <additive-expression>
 	std::optional<CompilationError> Analyser::analyseExpression(){
+		auto err = analyseAdditiveExpression();
+		if (err.has_value())
+			return err;
+		return {};
+	}
+
+	// <additive-expression> :: =
+	// 	<multiplicative-expression>{ <additive-operator><multiplicative-expression> }
+	// 	<additive-operator>       ::= '+' | '-'
+	std::optional<CompilationError> Analyser::analyseAdditiveExpression() {
+		auto err = analyseMultiplicativeExpression();
+		if (err.has_value())
+			return err;
+
+		// {<additive-operator><multiplicative-expression>}
+		while (true) {
+			auto next = nextToken();
+			if (!next.has_value() || (next.value().GetType() != TokenType::PLUS_SIGN && next.value().GetType() != TokenType::MINUS_SIGN))
+				return {};
+			err = analyseMultiplicativeExpression();
+			if (err.has_value())
+				return err;
+		}
+		return {};
+	}
+
+	// <multiplicative-expression> ::= 
+	// <unary-expression>{<multiplicative-operator><unary-expression>}
+	std::optional<CompilationError> Analyser::analyseMultiplicativeExpression() {
+		auto err = analyseUnaryExpression();
+		if (err.has_value())
+			return err;
+
+		// {<multiplicative-operator><unary-expression>}
+		while (true) {
+			auto next = nextToken();
+			if (!next.has_value())
+				return {};
+			auto type = next.value().GetType();
+			
+			//存在可选式
+			if(type == TokenType::LEFT_PARENTHESIS || type == TokenType::PLUS_SIGN || type == TokenType::MINUS_SIGN ||
+				type == TokenType::IDENTIFIER || type == TokenType::DECIMAL_INTEGER || type == TokenType::HEXADECIMAL_INTEGER) {
+				unreadToken();
+				auto err = analyseMultiplicativeExpression();
+				if (err.has_value())
+					return err;
+
+				err = analyseUnaryExpression();
+				if (err.has_value())
+					return err;
+			}else {
+				return {};
+			}
+		}
+		return {};
+	}
+
+	//<unary-expression> ::= [<unary-operator>]<primary-expression>
+	std::optional<CompilationError> Analyser::analyseUnaryExpression() {
+		//[<unary-operator>]
+		auto next = nextToken();
+		if(!next.has_value())
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		auto type = next.value().GetType();
+		if(type != TokenType::PLUS_SIGN && type != TokenType::MINUS_SIGN) {//无可选式
+			unreadToken();
+		}
+		auto err = analysePrimaryExpression();
+		if (err.has_value())
+			return err;
+		return {};
+	}
+
+	//<primary-expression> ::=  
+	// '(' <expression> ')'
+	// 	| <identifier>
+	// 	| <integer - literal>
+	// 	| <function - call>
+	std::optional<CompilationError> Analyser::analysePrimaryExpression() {
+		auto next = nextToken();
+		if(!next.has_value())
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		std::optional<c0::CompilationError> err;
+		
+		auto type = next.value().GetType();
+		switch (type) {
+		case TokenType::LEFT_PARENTHESIS:
+			err = analyseExpression();
+			if (err.has_value())
+				return err;
+			// )
+			next = nextToken();
+			if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+			break;
+
+		case TokenType::IDENTIFIER://两种情况，<identifier> 和 <function-call>
+			next = nextToken();
+
+			//是 <identifier>
+			if(!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS) {
+				unreadToken();
+				//TODO
+				return {};
+			}
+
+			//是 <function-call>
+			unreadToken();
+			unreadToken();
+			auto err = analyseFunctionCall();
+			if (err.has_value())
+				return err;
+			
+			//TODO
+			break;
+			
+		//<integer-literal>
+		case TokenType::DECIMAL_INTEGER:
+		case TokenType::HEXADECIMAL_INTEGER:
+			//TODO
+			break;
+
+
+
+		}
+		return {};
+	}
+
+	// <function-call> :: =
+	// 	<identifier> '('[<expression-list>] ')'
+	std::optional<CompilationError> Analyser::analyseFunctionCall() {
+		//<identifier>
+		auto next = nextToken();
+		if(!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// (
+		next = nextToken();
+		if (!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// [<expression-list>]
+		next = nextToken();
+		if(!next.has_value())
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+
+		// 存在可选项
+		if (next.value().GetType() != TokenType::RIGHT_PARENTHESIS) {
+			auto err = analyseExpressionList();
+			if (err.has_value())
+				return err;
+		}
+		else {
+			unreadToken();
+		}
+
+		// )
+		next = nextToken();
+		if(!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+
+		//TODO
+		return {};
+	}
+
+	// <expression-list> ::= <expression>{',' < expression > }
+	std::optional<CompilationError> Analyser::analyseExpressionList() {
+		auto err = analyseExpression();
+		if (err.has_value())
+			return err;
+
+		// {',' < expression > }
+		while (true) {
+			auto next = nextToken();
+			if(!next.has_value() || next.value().GetType() != TokenType::COMMA) {
+				unreadToken();
+				return {};
+			}
+			err = analyseExpression();
+			if (err.has_value())
+				return err;
+			//TODO
+		}
 		return {};
 	}
 

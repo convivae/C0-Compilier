@@ -2,6 +2,7 @@
 .vscode
 .idea
 CMakeSettings.json
+*.pdf
 *.plc0
 *.txt
 !CMakeLists.txt
@@ -9,3 +10,5 @@ build
 out
 cmake-build-debug
 grammar.md
+c0-basic-grammar.md
+c0-grammar.md

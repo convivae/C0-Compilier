@@ -47,12 +47,26 @@ namespace c0 {
 		std::optional<CompilationError> analyseCompoundStatement();
 		std::optional<CompilationError> analyseStatementSeq();
 		std::optional<CompilationError> analyseStatement();
+		std::optional<CompilationError> analyseCondition();
+		std::optional<CompilationError> analyseFunctionCall();
+		std::optional<CompilationError> analyseExpressionList();
+		std::optional<CompilationError> analyseAssignmentExpression();
+		std::optional<CompilationError> analyseScanStatement();
+		std::optional<CompilationError> analysePrintStatement();
+		std::optional<CompilationError> analysePrintableList();
+		std::optional<CompilationError> analysePrintable();
+		std::optional<CompilationError> analyseJumpStatement();
+		std::optional<CompilationError> analyseReturnStatement();
+		std::optional<CompilationError> analyseLoopStatement();
+		std::optional<CompilationError> analyseConditionStatement();
 		// <初始化声明列表>
 		std::optional<CompilationError> analyseInitDeclaratorList();
 		// <表达式>
 		std::optional<CompilationError> analyseExpression();
-		
-		
+		std::optional<CompilationError> analyseAdditiveExpression();
+		std::optional<CompilationError> analyseMultiplicativeExpression();
+		std::optional<CompilationError> analyseUnaryExpression();
+		std::optional<CompilationError> analysePrimaryExpression();
 
 
 		// Token 缓冲区相关操作
