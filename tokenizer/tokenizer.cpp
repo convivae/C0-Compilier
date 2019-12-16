@@ -3,7 +3,7 @@
 #include <cctype>
 #include <sstream>
 
-namespace c0 {
+namespace cc0 {
 
 	std::pair<std::optional<Token>, std::optional<CompilationError>> Tokenizer::NextToken() {
 		if (!_initialized)
@@ -72,13 +72,13 @@ namespace c0 {
 
 				// 使用了自己封装的判断字符类型的函数，定义于 tokenizer/utils.hpp
 				// see https://en.cppreference.com/w/cpp/string/byte/isblank
-				if (c0::isspace(ch)) // 读到的字符是空白字符（空格、换行、制表符等）
+				if (cc0::isspace(ch)) // 读到的字符是空白字符（空格、换行、制表符等）
 					current_state = DFAState::INITIAL_STATE; // 保留当前状态为初始状态，此处直接break也是可以的
-				else if (!c0::isprint(ch)) // control codes and backspace
+				else if (!cc0::isprint(ch)) // control codes and backspace
 					invalid = true;
-				else if (c0::isdigit(ch)) // 读到的字符是数字
+				else if (cc0::isdigit(ch)) // 读到的字符是数字
 					current_state = DFAState::NUMBER_STATE; // 切换到数字状态
-				else if (c0::isalpha(ch)) // 读到的字符是英文字母
+				else if (cc0::isalpha(ch)) // 读到的字符是英文字母
 					current_state = DFAState::IDENTIFIER_STATE; // 切换到标识符的状态
 				else {
 					switch (ch) {
@@ -187,11 +187,11 @@ namespace c0 {
 				auto ch = current_char.value();
 
 				// 如果读到的字符是数字，则存储读到的字符
-				if (c0::isdigit(ch)) {
+				if (cc0::isdigit(ch)) {
 					ss << ch;
 				}
 				// 如果读到的是字母，则存储读到的字符，并切换状态到标识符
-				else if (c0::isalpha(ch)) {
+				else if (cc0::isalpha(ch)) {
 					ss << ch;
 					current_state = DFAState::IDENTIFIER_STATE;
 				}
@@ -230,7 +230,7 @@ namespace c0 {
 					ss << ch;
 				}
 				// 如果读到的是字母，则存储读到的字符，并切换状态到标识符
-				else if (c0::isalpha(ch)) {
+				else if (cc0::isalpha(ch)) {
 					ss << ch;
 					current_state = DFAState::IDENTIFIER_STATE;
 				}
@@ -267,7 +267,7 @@ namespace c0 {
 				auto ch = current_char.value();
 
 				// 如果读到的字符是数字，则存储读到的字符
-				if (c0::isalpha(ch) || c0::isdigit(ch)) {
+				if (cc0::isalpha(ch) || cc0::isdigit(ch)) {
 					ss << ch;
 				}
 				// 如果读到的字符不是上述情况之一，则回退读到的字符，并解析已经读到的字符串
@@ -404,7 +404,7 @@ namespace c0 {
 		switch (t.GetType()) {
 		case IDENTIFIER: {
 			auto val = t.GetValueString();
-			if (c0::isdigit(val[0]))
+			if (cc0::isdigit(val[0]))
 				return std::make_optional<CompilationError>(t.GetStartPos().first, t.GetStartPos().second, ErrorCode::ErrInvalidIdentifier);
 			break;
 		}

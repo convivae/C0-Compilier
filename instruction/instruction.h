@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <utility>
 
-namespace c0 {
+namespace cc0 {
 
 	enum Operation {
 		ILL = 0,

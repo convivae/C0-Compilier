@@ -2,7 +2,7 @@
 
 #include <climits>
 
-namespace c0 {
+namespace cc0 {
 	std::pair<std::vector<Instruction>, std::optional<CompilationError>> Analyser::Analyse() {
 		auto err = analyseProgram();
 		if (err.has_value())
@@ -714,7 +714,7 @@ namespace c0 {
 		if(!next.has_value())
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
 
-		std::optional<c0::CompilationError> err;
+		std::optional<cc0::CompilationError> err;
 		
 		auto type = next.value().GetType();
 		switch (type) {
@@ -741,7 +741,7 @@ namespace c0 {
 			//是 <function-call>
 			unreadToken();
 			unreadToken();
-			auto err = analyseFunctionCall();
+			err = analyseFunctionCall();
 			if (err.has_value())
 				return err;
 			

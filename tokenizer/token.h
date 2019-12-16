@@ -6,7 +6,7 @@
 #include <string>
 #include <cstdint>
 
-namespace c0 {
+namespace cc0 {
 
 	enum TokenType {
 		NULL_TOKEN,
@@ -15,31 +15,31 @@ namespace c0 {
 		FLOATING_POINT,
 		IDENTIFIER,
 
-        //ÏÂÃæÊÇÔËËã·û
+        //è¿ç®—ç¬¦
         PLUS_SIGN,
         MINUS_SIGN,
         MULTIPLICATION_SIGN,
         DIVISION_SIGN,
 
-		//ÏÂÃæÊÇ±êµã·ûºÅ
+		//æ ‡ç‚¹ç¬¦å·
 		SEMICOLON,
 		COMMA,
-        LEFT_PARENTHESIS,   //Ð¡À¨ºÅ
-        RIGHT_PARENTHESIS,
-        LEFT_BRACE,         //´óÀ¨ºÅ
-        RIGHT_BRACE,
+        LEFT_PARENTHESIS,   //å·¦å°æ‹¬å·
+        RIGHT_PARENTHESIS,	//å³å°æ‹¬å·
+        LEFT_BRACE,         //å·¦å¤§æ‹¬å·
+        RIGHT_BRACE,		//å³å¤§æ‹¬å·
 
-		//±È½Ï·ûºÅ
+		//æ¯”è¾ƒè¿ç®—ç¬¦
 		EQUAL_SIGN,
 		LESS_SIGN,
 		ABOVE_SIGN,
-		EXCLAMATION_SIGN,	// ¸ÐÌ¾ºÅ !
+		EXCLAMATION_SIGN,	// æ„Ÿå¹å· ï¼
 		LESS_EQUAL_SIGN,
 		ABOVE_EQUAL_SIGN,
 		EQUAL_EQUAL_SIGN,
 		NOT_EQUAL_SIGN,
 
-		//ÏÂÃæÊÇ±£Áô×Ö
+		//ä¿ç•™å­—
 		CONST,
 		VOID,
 		INT,

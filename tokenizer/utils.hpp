@@ -10,7 +10,7 @@
 	} \
 	using __let_this_macro_end_with_a_simicolon_##f = int
 
-namespace c0 {
+namespace cc0 {
 	IS_FUNC(isprint);
 	IS_FUNC(isspace);
 	IS_FUNC(isblank);

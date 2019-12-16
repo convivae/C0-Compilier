@@ -4,70 +4,70 @@
 
 namespace fmt {
 	template<>
-	struct formatter<c0::ErrorCode> {
+	struct formatter<cc0::ErrorCode> {
 		template <typename ParseContext>
 		constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
 		template <typename FormatContext>
-		auto format(const c0::ErrorCode &p, FormatContext &ctx) {
+		auto format(const cc0::ErrorCode &p, FormatContext &ctx) {
 			std::string name;
 			switch (p) {
-			case c0::ErrNoError:
+			case cc0::ErrNoError:
 				name = "No error.";
 				break;
-			case c0::ErrStreamError:
+			case cc0::ErrStreamError:
 				name = "Stream error.";
 				break;
-			case c0::ErrEOF:
+			case cc0::ErrEOF:
 				name = "EOF";
 				break;
-			case c0::ErrInvalidInput:
+			case cc0::ErrInvalidInput:
 				name = "The input is invalid.";
 				break;
-			case c0::ErrInvalidIdentifier:
+			case cc0::ErrInvalidIdentifier:
 				name = "Identifier is invalid";
 				break;
-			case c0::ErrIntegerOverflow:
+			case cc0::ErrIntegerOverflow:
 				name = "The integer is too big(int64_t).";
 				break;
-			case c0::ErrNoBegin:
-				name = "The program should start with 'begin'.";
+			case cc0::ErrNeedTypeSpecifier:
+				name = "Need a type specifier here";
 				break;
-			case c0::ErrNoEnd:
-				name = "The program should end with 'end'.";
-				break;
-			case c0::ErrNeedIdentifier:
+			case cc0::ErrNeedIdentifier:
 				name = "Need an identifier here.";
 				break;
-			case c0::ErrConstantNeedValue:
+			case cc0::ErrConstantNeedValue:
 				name = "The constant need a value to initialize.";
 				break;
-			case c0::ErrNoSemicolon:
+			case cc0::ErrNoSemicolon:
 				name = "Zai? Wei shen me bu xie fen hao.";
 				break;
-			case c0::ErrInvalidVariableDeclaration:
+			case cc0::ErrInvalidVariableDeclaration:
 				name = "The declaration is invalid.";
 				break;
-			case c0::ErrIncompleteExpression:
+			case cc0::ErrIncompleteExpression:
 				name = "The expression is incomplete.";
 				break;
-			case c0::ErrNotDeclared:
+			case cc0::ErrNotDeclared:
 				name = "The variable or constant must be declared before being used.";
 				break;
-			case c0::ErrAssignToConstant:
+			case cc0::ErrAssignToConstant:
 				name = "Trying to assign value to a constant.";
 				break;
-			case c0::ErrDuplicateDeclaration:
+			case cc0::ErrDuplicateDeclaration:
 				name = "The variable or constant has been declared.";
 				break;
-			case c0::ErrNotInitialized:
+			case cc0::ErrNotInitialized:
 				name = "The variable has not been initialized.";
 				break;
-			case c0::ErrInvalidAssignment:
+			case cc0::ErrInvalidAssignment:
 				name = "The assignment statement is invalid.";
 				break;
-			case c0::ErrInvalidPrint:
+			case cc0::ErrInvalidPrint:
 				name = "The output statement is invalid.";
+				break;
+			case cc0::ErrIncompleteBrackets:
+				name = "The brackets is incomplete.";
 				break;
 			}
 			return format_to(ctx.out(), name);
@@ -75,12 +75,12 @@ namespace fmt {
 	};
 
 	template<>
-	struct formatter<c0::CompilationError> {
+	struct formatter<cc0::CompilationError> {
 		template <typename ParseContext>
 		constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
 		template <typename FormatContext>
-		auto format(const c0::CompilationError &p, FormatContext &ctx) {
+		auto format(const cc0::CompilationError &p, FormatContext &ctx) {
 			return format_to(ctx.out(), "Line: {} Column: {} Error: {}", p.GetPos().first, p.GetPos().second, p.GetCode());
 		}
 	};
@@ -88,12 +88,12 @@ namespace fmt {
 
 namespace fmt {
 	template<>
-	struct formatter<c0::Token> {
+	struct formatter<cc0::Token> {
 		template <typename ParseContext>
 		constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
 		template <typename FormatContext>
-		auto format(const c0::Token &p, FormatContext &ctx) {
+		auto format(const cc0::Token &p, FormatContext &ctx) {
 			return format_to(ctx.out(),
 				"Line: {} Column: {} Type: {} Value: {}",
 				p.GetStartPos().first, p.GetStartPos().second, p.GetType(), p.GetValueString());
@@ -101,61 +101,139 @@ namespace fmt {
 	};
 
 	template<>
-	struct formatter<c0::TokenType> {
+	struct formatter<cc0::TokenType> {
 		template <typename ParseContext>
 		constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
 		template <typename FormatContext>
-		auto format(const c0::TokenType &p, FormatContext &ctx) {
+		auto format(const cc0::TokenType &p, FormatContext &ctx) {
 			std::string name;
 			switch (p) {
-			case c0::NULL_TOKEN:
+			case cc0::NULL_TOKEN:
 				name = "NullToken";
 				break;
-			case c0::UNSIGNED_INTEGER:
-				name = "UnsignedInteger";
+			case cc0::DECIMAL_INTEGER:
+				name = "DecimalInteger";
 				break;
-			case c0::IDENTIFIER:
+			case cc0::HEXADECIMAL_INTEGER:
+				name = "HexDecimalInteger";
+				break;
+			case cc0::FLOATING_POINT:
+				name = "FloatingPoint";
+				break;
+			case cc0::IDENTIFIER:
 				name = "Identifier";
 				break;
-			case c0::BEGIN:
-				name = "Begin";
-				break;
-			case c0::END:
-				name = "End";
-				break;
-			case c0::VAR:
-				name = "Var";
-				break;
-			case c0::CONST:
-				name = "Const";
-				break;
-			case c0::PRINT:
-				name = "Print";
-				break;
-			case c0::PLUS_SIGN:
+			case cc0::PLUS_SIGN:
 				name = "PlusSign";
 				break;
-			case c0::MINUS_SIGN:
+			case cc0::MINUS_SIGN:
 				name = "MinusSign";
 				break;
-			case c0::MULTIPLICATION_SIGN:
+			case cc0::MULTIPLICATION_SIGN:
 				name = "MultiplicationSign";
 				break;
-			case c0::DIVISION_SIGN:
+			case cc0::DIVISION_SIGN:
 				name = "DivisionSign";
 				break;
-			case c0::EQUAL_SIGN:
-				name = "EqualSign";
-				break;
-			case c0::SEMICOLON:
+			case cc0::SEMICOLON:
 				name = "Semicolon";
 				break;
-			case c0::LEFT_BRACKET:
-				name = "LeftBracket";
+			case cc0::COMMA:
+				name = "Comma";
 				break;
-			case c0::RIGHT_BRACKET:
-				name = "RightBracket";
+			case cc0::LEFT_PARENTHESIS:
+				name = "LeftParenthesis";
+				break;
+			case cc0::RIGHT_PARENTHESIS:
+				name = "RightParenthesis";
+				break;
+			case cc0::LEFT_BRACE:
+				name = "LeftBrace";
+				break;
+			case cc0::RIGHT_BRACE:
+				name = "RightBrace";
+				break;
+			case cc0::EQUAL_SIGN:
+				name = "EqualSign";
+				break;
+			case cc0::LESS_SIGN:
+				name = "LessSign";
+				break;
+			case cc0::ABOVE_SIGN:
+				name = "AboveSign";
+				break;
+			case cc0::EXCLAMATION_SIGN:
+				name = "ExclamationSign";
+				break;
+			case cc0::LESS_EQUAL_SIGN:
+				name = "LessEqualSign";
+				break;
+			case cc0::ABOVE_EQUAL_SIGN:
+				name = "AboveEqualSign";
+				break;
+			case cc0::EQUAL_EQUAL_SIGN:
+				name = "EqualEqualSign";
+				break;
+			case cc0::NOT_EQUAL_SIGN:
+				name = "NotEqualSign";
+				break;
+			case cc0::CONST:
+				name = "Const";
+				break;
+			case cc0::VOID:
+				name = "Void";
+				break;
+			case cc0::INT:
+				name = "Int";
+				break;
+			case cc0::CHAR:
+				name = "Char";
+				break;
+			case cc0::DOUBLE:
+				name = "Double";
+				break;
+			case cc0::STRUCT:
+				name = "Struct";
+				break;
+			case cc0::IF:
+				name = "If";
+				break;
+			case cc0::ELSE:
+				name = "Else";
+				break;
+			case cc0::SWITCH:
+				name = "Switch";
+				break;
+			case cc0::CASE:
+				name = "Case";
+				break;
+			case cc0::DEFAULT:
+				name = "Default";
+				break;
+			case cc0::WHILE:
+				name = "While";
+				break;
+			case cc0::FOR:
+				name = "For";
+				break;
+			case cc0::DO:
+				name = "Do";
+				break;
+			case cc0::RETURN:
+				name = "Return";
+				break;
+			case cc0::BREAK:
+				name = "Break";
+				break;
+			case cc0::CONTINUE:
+				name = "Continue";
+				break;
+			case cc0::PRINT:
+				name = "Print";
+				break;
+			case cc0::SCAN:
+				name = "Scan";
 				break;
 			}
 			return format_to(ctx.out(), name);
@@ -165,39 +243,39 @@ namespace fmt {
 
 namespace fmt {
 	template<>
-	struct formatter<c0::Operation> {
+	struct formatter<cc0::Operation> {
 		template <typename ParseContext>
 		constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
 		template <typename FormatContext>
-		auto format(const c0::Operation &p, FormatContext &ctx) {
+		auto format(const cc0::Operation &p, FormatContext &ctx) {
 			std::string name;
 			switch (p) {
-			case c0::ILL:
+			case cc0::ILL:
 				name = "ILL";
 				break;
-			case c0::ADD:
+			case cc0::ADD:
 				name = "ADD";
 				break;
-			case c0::SUB:
+			case cc0::SUB:
 				name = "SUB";
 				break;
-			case c0::MUL:
+			case cc0::MUL:
 				name = "MUL";
 				break;
-			case c0::DIV:
+			case cc0::DIV:
 				name = "DIV";
 				break;
-			case c0::WRT:
+			case cc0::WRT:
 				name = "WRT";
 				break;
-			case c0::LIT:
+			case cc0::LIT:
 				name = "LIT";
 				break;
-			case c0::LOD:
+			case cc0::LOD:
 				name = "LOD";
 				break;
-			case c0::STO:
+			case cc0::STO:
 				name = "STO";
 				break;
 			}
@@ -205,25 +283,25 @@ namespace fmt {
 		}
 	};
 	template<>
-	struct formatter<c0::Instruction> {
+	struct formatter<cc0::Instruction> {
 		template <typename ParseContext>
 		constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
 		template <typename FormatContext>
-		auto format(const c0::Instruction &p, FormatContext &ctx) {
+		auto format(const cc0::Instruction &p, FormatContext &ctx) {
 			std::string name;
 			switch (p.GetOperation())
 			{
-			case c0::ILL:
-			case c0::ADD:
-			case c0::SUB:
-			case c0::MUL:
-			case c0::DIV:
-			case c0::WRT:
+			case cc0::ILL:
+			case cc0::ADD:
+			case cc0::SUB:
+			case cc0::MUL:
+			case cc0::DIV:
+			case cc0::WRT:
 				return format_to(ctx.out(), "{}", p.GetOperation());
-			case c0::LIT:
-			case c0::LOD:
-			case c0::STO:
+			case cc0::LIT:
+			case cc0::LOD:
+			case cc0::STO:
 				return format_to(ctx.out(), "{} {}", p.GetOperation(), p.GetX());
 			}
 			return format_to(ctx.out(), "ILL");

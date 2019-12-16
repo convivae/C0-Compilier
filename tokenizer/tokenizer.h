@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 
-namespace c0 {
+namespace cc0 {
 
 	class Tokenizer final {
 	private:

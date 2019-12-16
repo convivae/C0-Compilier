@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(c0)
+project(cc0)
 
 add_subdirectory(3rd_party/argparse)
 add_subdirectory(3rd_party/fmt)
@@ -66,24 +66,24 @@ set(test_src
 	tests/test_analyser.cpp
 )
 
-add_executable(c0_test ${test_src})
-target_include_directories(c0_test PRIVATE .)
-target_link_libraries(c0_test Catch2::Test ${PROJECT_LIB} fmt::fmt)
-add_test(all_test c0_test)
+add_executable(cc0_test ${test_src})
+target_include_directories(cc0_test PRIVATE .)
+target_link_libraries(cc0_test Catch2::Test ${PROJECT_LIB} fmt::fmt)
+add_test(all_test cc0_test)
 find_program(OPEN_CPP_COVERAGE OpenCppCoverage.exe)
 
 if (MSVC AND OPEN_CPP_COVERAGE)
 	string(REPLACE "/" "\\" MY_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-	add_custom_command(TARGET c0_test
+	add_custom_command(TARGET cc0_test
 					   POST_BUILD
 					   COMMAND ${OPEN_CPP_COVERAGE} 
 					            --sources ${MY_SOURCE_DIR} 
 								--excluded_sources ${MY_SOURCE_DIR}\\3rd_party
-								"$<TARGET_FILE:c0_test>")
+								"$<TARGET_FILE:cc0_test>")
 else()
 	
 endif()
 
-set_target_properties(c0_test PROPERTIES
+set_target_properties(cc0_test PROPERTIES
                       CXX_STANDARD 17
                       CXX_STANDARD_REQUIRE ON)

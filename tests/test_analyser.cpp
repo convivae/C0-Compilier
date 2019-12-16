@@ -6,36 +6,36 @@
 
 #include <sstream>
 
-auto format(const c0::Operation& p, int num) {
+auto format(const cc0::Operation& p, int num) {
 	std::string name;
 	std::string ss = std::to_string(num);
 
 	switch (p) {
-	case c0::ILL:
+	case cc0::ILL:
 		name = "ILL"; name += "\t" + ss;
 		break;
-	case c0::ADD:
+	case cc0::ADD:
 		name = "ADD";
 		break;
-	case c0::SUB:
+	case cc0::SUB:
 		name = "SUB";
 		break;
-	case c0::MUL:
+	case cc0::MUL:
 		name = "MUL";
 		break;
-	case c0::DIV:
+	case cc0::DIV:
 		name = "DIV";
 		break;
-	case c0::WRT:
+	case cc0::WRT:
 		name = "WRT";
 		break;
-	case c0::LIT:
+	case cc0::LIT:
 		name = "LIT"; name += "\t" + ss;
 		break;
-	case c0::LOD:
+	case cc0::LOD:
 		name = "LOD"; name += "\t" + ss;
 		break;
-	case c0::STO:
+	case cc0::STO:
 		name = "STO"; name += "\t" + ss;
 		break;
 	}
@@ -54,7 +54,7 @@ auto format(const c0::Operation& p, int num) {
 //		"end\n";
 //	std::stringstream ss;
 //	ss.str(input);
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	std::vector<int32_t> output = {
 //		-94,-122
 //	};
@@ -65,14 +65,14 @@ auto format(const c0::Operation& p, int num) {
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//虚拟机
-//	auto vm = c0::VM(anz_res.first);
+//	auto vm = cc0::VM(anz_res.first);
 //	auto vm_res = vm.Run();
 //
 //	//输出
@@ -97,20 +97,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrConstantNeedValue);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrConstantNeedValue);
 //}
 //
 //TEST_CASE("Test Analyser Duplicate Declaration") {
@@ -124,20 +124,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrDuplicateDeclaration);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrDuplicateDeclaration);
 //}
 //
 //TEST_CASE("Test Analyser Not Declared") {
@@ -151,20 +151,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrNotDeclared);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrNotDeclared);
 //}
 //
 //TEST_CASE("Test Analyser Assign To Constant") {
@@ -178,20 +178,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrAssignToConstant);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrAssignToConstant);
 //}
 //
 //TEST_CASE("Test Analyser Not Initialized") {
@@ -205,20 +205,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrNotInitialized);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrNotInitialized);
 //}
 //
 ////下面是助教给的样例
@@ -241,21 +241,21 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//虚拟机
-//	auto vm = c0::VM(anz_res.first);
+//	auto vm = cc0::VM(anz_res.first);
 //	auto vm_res = vm.Run();
 //
 //	//输出
@@ -286,21 +286,21 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//虚拟机
-//	auto vm = c0::VM(anz_res.first);
+//	auto vm = cc0::VM(anz_res.first);
 //	auto vm_res = vm.Run();
 //
 //	//输出
@@ -338,21 +338,21 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//虚拟机
-//	auto vm = c0::VM(anz_res.first);
+//	auto vm = cc0::VM(anz_res.first);
 //	auto vm_res = vm.Run();
 //
 //	//输出
@@ -380,20 +380,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrNoBegin);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrNoBegin);
 //}
 //
 //TEST_CASE("missing_semicolon") {
@@ -407,20 +407,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrNoSemicolon);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrNoSemicolon);
 //}
 //
 //TEST_CASE("redeclaration") {
@@ -433,20 +433,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrDuplicateDeclaration);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrDuplicateDeclaration);
 //}
 //
 //TEST_CASE("uninit") {
@@ -459,20 +459,20 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrNotInitialized);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrNotInitialized);
 //}
 //
 //TEST_CASE("var_const") {
@@ -485,18 +485,18 @@ auto format(const c0::Operation& p, int num) {
 //	ss.str(input);
 //
 //	//词法分析
-//	c0::Tokenizer tkz(ss);
+//	cc0::Tokenizer tkz(ss);
 //	auto result = tkz.AllTokens();
 //	if (result.second.has_value()) {
 //		FAIL();
 //	}
 //
 //	//语法分析
-//	c0::Analyser anz(result.first);
+//	cc0::Analyser anz(result.first);
 //	auto anz_res = anz.Analyse();
 //	if (!anz_res.second.has_value()) {
 //		FAIL();
 //	}
 //
-//	REQUIRE(anz_res.second->GetCode() == c0::ErrNoEnd);
+//	REQUIRE(anz_res.second->GetCode() == cc0::ErrNoEnd);
 //}

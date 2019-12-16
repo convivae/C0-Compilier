@@ -3,25 +3,25 @@
 #include <vector>
 #include <optional>
 
-namespace c0 {
-	//¼ò¶øÑÔÖ®£¬generate()º¯ÊıµÄ×÷ÓÃ¾ÍÊÇÖ´ĞĞ¸Ã½ÚµãµÄÓïÒå·ÖÎöÒÔ¼°´úÂëÉú³É£¬
-	//ÄãËùĞèÒª×öµÄ¾ÍÊÇÔÚÔÚ¶ÔÓ¦½ÚµãµÄgenerate()ÖĞÊµÏÖ¸Ã½ÚµãµÄÓïÒå¶¯×÷£¨±ÈÈç×ÖÃæÁ¿½ÚµãÖ´ĞĞ¼ÓÔØ³£Á¿¡¢±äÁ¿ÉùÃ÷½Úµã²Ù×÷·ûºÅ±í£©¡£
-	//Ö»Òªµ÷ÓÃÓï·¨Ê÷¸ù²¿µÄgenerate()£¬¾ÍÄÜ¹»µÃµ½Õû¿ÃÓï·¨Ê÷¶ÔÓ¦µÄ´úÂëÁË¡£
+namespace cc0 {
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½generate()ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¾ï¿½ï¿½ï¿½Ö´ï¿½Ğ¸Ã½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½Ó¦ï¿½Úµï¿½ï¿½generate()ï¿½ï¿½Êµï¿½Ö¸Ã½Úµï¿½ï¿½ï¿½ï¿½ï¿½å¶¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Ö´ï¿½Ğ¼ï¿½ï¿½Ø³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å±ï¿½ï¿½ï¿½ï¿½ï¿½
+	//Ö»Òªï¿½ï¿½ï¿½ï¿½ï¿½ï·¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½generate()ï¿½ï¿½ï¿½ï¿½ï¿½Ü¹ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï·¨ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ä´ï¿½ï¿½ï¿½ï¿½Ë¡ï¿½
 	class AST {
-		std::optional<>generate();
+		std::optional<int>generate();
 	};
 
-	// ±í´ïÊ½µÄÓï·¨Ê÷
+	// ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï·¨ï¿½ï¿½
 	struct ExprAST :AST {
-		//TODO ·µ»ØÖµÎªÕûÊı»òdouble
+		//TODO ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½double
 		void generate();
 	};
 	
-	//¶şÖµ±í´ïÊ½
+	//ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Ê½
 	struct BinaryExprAST :ExprAST {
-		//ÔËËã·û
+		//ï¿½ï¿½ï¿½ï¿½ï¿½
 		Operation op;
-		//×óÓÒ²Ù×÷Êı
+		//ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½
 		ExprAST* lhs, * rhs;
 
 		BinaryExprAST(Operation op, ExprAST* lhs, ExprAST* rhs)
@@ -31,9 +31,10 @@ namespace c0 {
 			lhs->generate();
 			rhs->generate();
 			switch (op) {
-			case Operation::ADD: output("iadd"); break;
-			case Operation::SUB: output("isub"); break;
-			default: /* error */
+			// case Operation::ADD: output("iadd"); break;
+			// case Operation::SUB: output("isub"); break;
+			default:break;
+				/* error */
 			}
 			return /* */;
 		}
@@ -45,7 +46,7 @@ namespace c0 {
 		IntExprAST(int value) : value(value){}
 
 		void generate() {
-			output("ipush %d", value);
+			// output("ipush %d", value);
 			return /* */;
 		}
 	};
@@ -57,10 +58,10 @@ namespace c0 {
 	};
 
 
-	//Ìõ¼şÓï¾äµÄÓï·¨Ê÷
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï·¨ï¿½ï¿½
 	struct StmtAST:AST {};
 
-	//ifÓï¾ä
+	//ifï¿½ï¿½ï¿½
 	struct IfStmtAST : StmtAST {
 		ExprAST* condtion;
 		StmtAST* thenStmt;

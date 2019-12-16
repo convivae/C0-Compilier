@@ -3,12 +3,12 @@
 .idea
 CMakeSettings.json
 *.pdf
-*.plc0
+*.c0
 *.txt
 !CMakeLists.txt
 build
 out
 cmake-build-debug
 grammar.md
-c0-basic-grammar.md
-c0-grammar.md
+cc0-basic-grammar.md
+cc0-grammar.md

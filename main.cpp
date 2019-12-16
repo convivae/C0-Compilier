@@ -8,8 +8,8 @@
 #include <iostream>
 #include <fstream>
 
-std::vector<c0::Token> _tokenize(std::istream& input) {
-	c0::Tokenizer tkz(input);
+std::vector<cc0::Token> _tokenize(std::istream& input) {
+	cc0::Tokenizer tkz(input);
 	auto p = tkz.AllTokens();
 	if (p.second.has_value()) {
 		fmt::print(stderr, "Tokenization error: {}\n", p.second.value());
@@ -27,7 +27,7 @@ void Tokenize(std::istream& input, std::ostream& output) {
 
 void Analyse(std::istream& input, std::ostream& output){
 	auto tks = _tokenize(input);
-	c0::Analyser analyser(tks);
+	cc0::Analyser analyser(tks);
 	auto p = analyser.Analyse();
 	if (p.second.has_value()) {
 		fmt::print(stderr, "Syntactic analysis error: {}\n", p.second.value());
@@ -40,7 +40,7 @@ void Analyse(std::istream& input, std::ostream& output){
 }
 
 int main(int argc, char** argv) {
-	argparse::ArgumentParser program("c0");
+	argparse::ArgumentParser program("cc0");
 	program.add_argument("input")
 		.help("speicify the file to be compiled.");
 	program.add_argument("-t")

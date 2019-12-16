@@ -5,7 +5,7 @@
 #include <utility>
 #include <iostream>
 
-namespace c0 {
+namespace cc0 {
 
 	inline void DieAndPrint(std::string condition) {
 		std::cout << "Exception: " <<  condition << "\n";
@@ -24,7 +24,7 @@ namespace c0 {
 		ErrInvalidInput,
 		ErrInvalidIdentifier,
 		ErrIntegerOverflow, // int32_t overflow.
-		ErrNeedTypeSpecifier,	//È±ÉÙ type-specifier
+		ErrNeedTypeSpecifier,	//È±ï¿½ï¿½ type-specifier
 		ErrNeedIdentifier,
 		ErrConstantNeedValue,
 		ErrNoSemicolon,
@@ -36,7 +36,7 @@ namespace c0 {
 		ErrNotInitialized,
 		ErrInvalidAssignment,
 		ErrInvalidPrint,
-		ErrIncompleteBrackets,	//²»ÍêÕûµÄÀ¨ºÅ
+		ErrIncompleteBrackets,	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	};
 
 	class CompilationError final{
