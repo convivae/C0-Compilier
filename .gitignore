@@ -10,5 +10,5 @@ build
 out
 cmake-build-debug
 grammar.md
-cc0-basic-grammar.md
-cc0-grammar.md
+c0-basic-grammar.md
+c0-grammar.md
