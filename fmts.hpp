@@ -249,36 +249,7 @@ namespace fmt {
 
 		template <typename FormatContext>
 		auto format(const cc0::Operation &p, FormatContext &ctx) {
-			std::string name;
-			switch (p) {
-			case cc0::ILL:
-				name = "ILL";
-				break;
-			case cc0::ADD:
-				name = "ADD";
-				break;
-			case cc0::SUB:
-				name = "SUB";
-				break;
-			case cc0::MUL:
-				name = "MUL";
-				break;
-			case cc0::DIV:
-				name = "DIV";
-				break;
-			case cc0::WRT:
-				name = "WRT";
-				break;
-			case cc0::LIT:
-				name = "LIT";
-				break;
-			case cc0::LOD:
-				name = "LOD";
-				break;
-			case cc0::STO:
-				name = "STO";
-				break;
-			}
+			const auto& name = cc0::nameOfOpCode.at(p);
 			return format_to(ctx.out(), name);
 		}
 	};
@@ -292,17 +263,21 @@ namespace fmt {
 			std::string name;
 			switch (p.GetOperation())
 			{
-			case cc0::ILL:
-			case cc0::ADD:
-			case cc0::SUB:
-			case cc0::MUL:
-			case cc0::DIV:
-			case cc0::WRT:
+			case cc0::nop:
+			case cc0::pop:
+			case cc0::pop2:
+			case cc0::dup:
+			case cc0::dup2:
+			case cc0::_new:
 				return format_to(ctx.out(), "{}", p.GetOperation());
-			case cc0::LIT:
-			case cc0::LOD:
-			case cc0::STO:
+			case cc0::bipush:
+			case cc0::ipush:
+			case cc0::popn:
+			case cc0::loadc:
+			case cc0::snew:
 				return format_to(ctx.out(), "{} {}", p.GetOperation(), p.GetX());
+			case cc0::loada:
+				return format_to(ctx.out(), "{} {} {}", p.GetOperation(), p.GetX(),p.GetY());
 			}
 			return format_to(ctx.out(), "ILL");
 		}

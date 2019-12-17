@@ -11,11 +11,40 @@ namespace cc0 {
 			return std::make_pair(_instructions, std::optional<CompilationError>());
 	}
 
-	// <C0-program> :: =
-	// { <variable-declaration> } {<function-definition>}
+	// <C0-program> :: = { <variable-declaration> } {<function-definition>}
+	// <variable-declaration> ::= [<const-qualifier>] <type-specifier> <identifier> [<initializer>]{','<init-declarator>}';'
+	// <function-definition>  ::=					  <type-specifier> <identifier> '(' [<parameter-declaration-list>] ')'<compound-statement>
 	std::optional<CompilationError> Analyser::analyseProgram() {
+		std::optional<Token> next;
+		TokenType type;
 		while(true) {
-			
+			next = nextToken();
+			if (!next.has_value())	//文件为空，直接返回
+				return {};
+			type = next.value().GetType();
+			if(type == TokenType::CONST) { //确定是 <variable-declaration>
+				
+			}
+			else if(type == TokenType::VOID || type == TokenType::INT) { // <type-specifier>
+				//<identifier>
+				next = nextToken();
+				if(!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER) { // error
+					
+				}
+
+				//judge <variable-declaration> or <function-definition>
+				next = nextToken();
+				if(!next.has_value()) {	// error
+					
+				}
+				if(next.value().GetType() == TokenType::LEFT_PARENTHESIS) {	//确认是 
+					
+				}
+
+				
+			}else {// error
+				
+			}
 		}
 
 		while(true) {

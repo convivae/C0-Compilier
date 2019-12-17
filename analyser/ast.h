@@ -4,24 +4,17 @@
 #include <optional>
 
 namespace cc0 {
-	//�����֮��generate()���������þ���ִ�иýڵ����������Լ��������ɣ�
-	//������Ҫ���ľ������ڶ�Ӧ�ڵ��generate()��ʵ�ָýڵ�����嶯���������������ڵ�ִ�м��س��������������ڵ�������ű�����
-	//ֻҪ�����﷨��������generate()�����ܹ��õ������﷨����Ӧ�Ĵ����ˡ�
 	class AST {
-		std::optional<int>generate();
+		std::optional<int> generate();
 	};
 
-	// ����ʽ���﷨��
 	struct ExprAST :AST {
-		//TODO ����ֵΪ������double
+		//TODO 
 		void generate();
 	};
-	
-	//��ֵ����ʽ
+
 	struct BinaryExprAST :ExprAST {
-		//�����
 		Operation op;
-		//���Ҳ�����
 		ExprAST* lhs, * rhs;
 
 		BinaryExprAST(Operation op, ExprAST* lhs, ExprAST* rhs)
@@ -58,10 +51,8 @@ namespace cc0 {
 	};
 
 
-	//���������﷨��
 	struct StmtAST:AST {};
 
-	//if���
 	struct IfStmtAST : StmtAST {
 		ExprAST* condtion;
 		StmtAST* thenStmt;

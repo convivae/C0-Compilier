@@ -10,8 +10,27 @@
 #include <map>
 #include <cstdint>
 #include <cstddef> // for std::size_t
+#include <variant>
+#include <set>
 
 namespace cc0 {
+	enum Type {
+		STRING_TYPE = 0,	// S
+		INT_TYPE = 1,		// I
+		DOUBLE_TYPE = 2		// D
+	};
+	struct _Constants {
+		int index;
+		Type type;
+		std::variant<std::string, std::int32_t, double> value;
+	};
+
+	struct _Functions {	//函数表
+		int index;
+		int nameIndex;	//函数名在.constants中的下标
+		int paramSize;	//参数占用的slot数
+		int level;		//函数嵌套的层级
+	};
 
 	class Analyser final {
 	private:
@@ -95,9 +114,13 @@ namespace cc0 {
 		// 获得 {变量，常量} 在栈上的偏移
 		int32_t getIndex(const std::string&);
 	private:
+		std::set<_Constants> _constants;	//常量表，记录int、double、字符串常量的信息
+		std::set<Instruction> _start;		//启动代码，负责执行全局变量的初始化
+		std::set<_Functions> _functions;	//函数表，记录函数的基本信息
+		std::set<Instruction> _funN;		//函数体
+
 		std::vector<Token> _tokens;
 		std::size_t _offset;
-		std::vector<Instruction> _instructions;
 		std::pair<uint64_t, uint64_t> _current_pos;
 
 		// 为了简单处理，我们直接把符号表耦合在语法分析里

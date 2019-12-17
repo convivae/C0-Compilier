@@ -6,41 +6,41 @@
 
 #include <sstream>
 
-auto format(const cc0::Operation& p, int num) {
-	std::string name;
-	std::string ss = std::to_string(num);
-
-	switch (p) {
-	case cc0::ILL:
-		name = "ILL"; name += "\t" + ss;
-		break;
-	case cc0::ADD:
-		name = "ADD";
-		break;
-	case cc0::SUB:
-		name = "SUB";
-		break;
-	case cc0::MUL:
-		name = "MUL";
-		break;
-	case cc0::DIV:
-		name = "DIV";
-		break;
-	case cc0::WRT:
-		name = "WRT";
-		break;
-	case cc0::LIT:
-		name = "LIT"; name += "\t" + ss;
-		break;
-	case cc0::LOD:
-		name = "LOD"; name += "\t" + ss;
-		break;
-	case cc0::STO:
-		name = "STO"; name += "\t" + ss;
-		break;
-	}
-	return name;
-}
+// auto format(const cc0::Operation& p, int num) {
+// 	std::string name;
+// 	std::string ss = std::to_string(num);
+//
+// 	switch (p) {
+// 	case cc0::ILL:
+// 		name = "ILL"; name += "\t" + ss;
+// 		break;
+// 	case cc0::ADD:
+// 		name = "ADD";
+// 		break;
+// 	case cc0::SUB:
+// 		name = "SUB";
+// 		break;
+// 	case cc0::MUL:
+// 		name = "MUL";
+// 		break;
+// 	case cc0::DIV:
+// 		name = "DIV";
+// 		break;
+// 	case cc0::WRT:
+// 		name = "WRT";
+// 		break;
+// 	case cc0::LIT:
+// 		name = "LIT"; name += "\t" + ss;
+// 		break;
+// 	case cc0::LOD:
+// 		name = "LOD"; name += "\t" + ss;
+// 		break;
+// 	case cc0::STO:
+// 		name = "STO"; name += "\t" + ss;
+// 		break;
+// 	}
+// 	return name;
+// }
 
 ///*自己造的样例*/
 //TEST_CASE("Test Base Analyser") {

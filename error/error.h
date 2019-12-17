@@ -24,7 +24,7 @@ namespace cc0 {
 		ErrInvalidInput,
 		ErrInvalidIdentifier,
 		ErrIntegerOverflow, // int32_t overflow.
-		ErrNeedTypeSpecifier,	//ȱ�� type-specifier
+		ErrNeedTypeSpecifier,	// type-specifier
 		ErrNeedIdentifier,
 		ErrConstantNeedValue,
 		ErrNoSemicolon,
@@ -36,7 +36,7 @@ namespace cc0 {
 		ErrNotInitialized,
 		ErrInvalidAssignment,
 		ErrInvalidPrint,
-		ErrIncompleteBrackets,	//������������
+		ErrIncompleteBrackets,	
 	};
 
 	class CompilationError final{
