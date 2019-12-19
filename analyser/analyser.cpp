@@ -83,7 +83,7 @@ namespace cc0 {
 	// 变量声明，包括const，放入.constants中，另外，需要分配内存
 	// TODO 考虑类型转化，函数return等问题
 	std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
-		//const
+		// const
 		// TODO const修饰的变量必须被显式初始化
 		auto next = nextToken(); // [<const-qualifier>]
 		if(!next.has_value() && next.value().GetType() == TokenType::CONST) {
