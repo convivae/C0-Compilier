@@ -3,12 +3,12 @@
 #include <climits>
 
 namespace cc0 {
-	std::pair<std::vector<Instruction>, std::optional<CompilationError>> Analyser::Analyse() {
+	std::pair<Output, std::optional<CompilationError>> Analyser::Analyse() {
 		auto err = analyseProgram();
 		if (err.has_value())
-			return std::make_pair(std::vector<Instruction>(), err);
+			return std::make_pair(_output, err);
 		else
-			return std::make_pair(_instructions, std::optional<CompilationError>());
+			return std::make_pair(_output, std::optional<CompilationError>());
 	}
 
 	// <C0-program> :: = { <variable-declaration> } {<function-definition>}
@@ -16,39 +16,61 @@ namespace cc0 {
 	// <function-definition>  ::=					  <type-specifier> <identifier> '(' [<parameter-declaration-list>] ')'<compound-statement>
 	std::optional<CompilationError> Analyser::analyseProgram() {
 		std::optional<Token> next;
+		std::optional<CompilationError> err;
+		bool isInFirst = true;	//判断目前是不是在 { <variable-declaration> } 中
 		TokenType type;
-		while(true) {
+		while(isInFirst) {
 			next = nextToken();
 			if (!next.has_value())	//文件为空，直接返回
 				return {};
 			type = next.value().GetType();
 			if(type == TokenType::CONST) { //确定是 <variable-declaration>
-				
+				unreadToken();
+				err = analyseVariableDeclaration();
+				if (err.has_value())
+					return err;
 			}
 			else if(type == TokenType::VOID || type == TokenType::INT) { // <type-specifier>
 				//<identifier>
 				next = nextToken();
 				if(!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER) { // error
-					
+					return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
 				}
 
 				//judge <variable-declaration> or <function-definition>
 				next = nextToken();
 				if(!next.has_value()) {	// error
-					
+					return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
 				}
-				if(next.value().GetType() == TokenType::LEFT_PARENTHESIS) {	//确认是 
-					
+				if(next.value().GetType() == TokenType::LEFT_PARENTHESIS) {	//确认是 <function-definition>
+					isInFirst = false;
+					unreadToken();
+					unreadToken();
+					unreadToken();
+					err = analyseFunctionDeclaration();
+					if (err.has_value())
+						return err;
+				}else {	//确认是 <variable-declaration>
+					unreadToken();
+					unreadToken();
+					unreadToken();
+					err = analyseVariableDeclaration();
+					if (err.has_value())
+						return err;
 				}
-
-				
 			}else {// error
-				
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
 			}
 		}
 
-		while(true) {
-			
+		while(true) {	// <function-definition>
+			next = nextToken();
+			if (!next.has_value())	//文件为空，直接返回
+				return {};
+			unreadToken();
+			err = analyseFunctionDeclaration();
+			if (err.has_value())
+				return err;
 		}
 		return {};
 	}
@@ -56,10 +78,13 @@ namespace cc0 {
 	// <variable-declaration> ::= 
 	// [<const-qualifier>]<type-specifier> < init-declarator-list>';'
 	// <type-specifier>         ::= <simple-type-specifier>
-	// <simple - type - specifier>  :: = 'void' | 'int'
+	// <simple-type-specifier>  :: = 'void' | 'int'
 	// <const-qualifier>        ::= 'const'
+	// 变量声明，包括const，放入.constants中，另外，需要分配内存
+	// TODO 考虑类型转化，函数return等问题
 	std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
 		//const
+		// TODO const修饰的变量必须被显式初始化
 		auto next = nextToken(); // [<const-qualifier>]
 		if(!next.has_value() && next.value().GetType() == TokenType::CONST) {
 			next = nextToken();
@@ -68,13 +93,16 @@ namespace cc0 {
 		// <type-specifier>
 		if (!next.has_value() || (next.value().GetType() != TokenType::VOID && next.value().GetType() != TokenType::INT))
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
-		if(next.value().GetType() != TokenType::VOID) {
+		if(next.value().GetType() == TokenType::VOID) {
+			// void 不能参与变量的声明 (void 和 const void 都不行)
+			
+		}
+		else if(next.value().GetType() == TokenType::INT) {
 			//TODO
 			//生成编译语句
 		}
-		else if(next.value().GetType() != TokenType::INT) {
-			//TODO
-			//生成编译语句
+		else {//error
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
 		}
 		auto err = analyseInitDeclaratorList();
 		if (err.has_value())

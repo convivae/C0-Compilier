@@ -2,6 +2,8 @@
 
 #include "error/error.h"
 #include "instruction/instruction.h"
+#include "instruction/constants.h"
+#include "instruction/functions.h"
 #include "tokenizer/token.h"
 
 #include <vector>
@@ -10,26 +12,15 @@
 #include <map>
 #include <cstdint>
 #include <cstddef> // for std::size_t
-#include <variant>
-#include <set>
+#include <algorithm>
 
 namespace cc0 {
-	enum Type {
-		STRING_TYPE = 0,	// S
-		INT_TYPE = 1,		// I
-		DOUBLE_TYPE = 2		// D
-	};
-	struct _Constants {
-		int index;
-		Type type;
-		std::variant<std::string, std::int32_t, double> value;
-	};
 
-	struct _Functions {	//函数表
-		int index;
-		int nameIndex;	//函数名在.constants中的下标
-		int paramSize;	//参数占用的slot数
-		int level;		//函数嵌套的层级
+	struct Output {
+		std::vector<Constants> _constants;	//常量表，记录int、double、字符串常量的信息
+		std::vector<Instruction> _start;		//启动代码，负责执行全局变量的初始化
+		std::vector<Functions> _functions;	//函数表，记录函数的基本信息
+		std::vector<Instruction> _funN;		//函数体
 	};
 
 	class Analyser final {
@@ -40,14 +31,36 @@ namespace cc0 {
 		using int32_t = std::int32_t;
 	public:
 		Analyser(std::vector<Token> v)
-			: _tokens(std::move(v)), _offset(0), _instructions({}), _current_pos(0, 0),
+			: _tokens(std::move(v)), _offset(0), _output({}), _current_pos(0, 0),
 			_uninitialized_vars({}), _vars({}), _consts({}), _nextTokenIndex(0) {}
 		Analyser(Analyser&&) = delete;
 		Analyser(const Analyser&) = delete;
 		Analyser& operator=(Analyser) = delete;
 
-		// 唯一接口
-		std::pair<std::vector<Instruction>, std::optional<CompilationError>> Analyse();
+		// 接口
+		std::pair<Output, std::optional<CompilationError>> Analyse();
+
+		int32_t getPos(std::vector<Constants> source, const Constants& value) const
+		{
+			const auto iter = std::find(source.begin(), source.end(), value);
+			if(iter != source.end())
+				return iter - source.begin();
+			return -1;
+		}
+		int32_t getPos(std::vector<Instruction> source, const Instruction& value) const
+		{
+			const auto iter = std::find(source.begin(), source.end(), value);
+			if (iter != source.end())
+				return iter - source.begin();
+			return -1;
+		}
+		int32_t getPos(std::vector<Functions> source, const Functions& value) const
+		{
+			const auto iter = std::find(source.begin(), source.end(), value);
+			if (iter != source.end())
+				return iter - source.begin();
+			return -1;
+		}
 	private:
 		// 所有的递归子程序
 
@@ -114,10 +127,7 @@ namespace cc0 {
 		// 获得 {变量，常量} 在栈上的偏移
 		int32_t getIndex(const std::string&);
 	private:
-		std::set<_Constants> _constants;	//常量表，记录int、double、字符串常量的信息
-		std::set<Instruction> _start;		//启动代码，负责执行全局变量的初始化
-		std::set<_Functions> _functions;	//函数表，记录函数的基本信息
-		std::set<Instruction> _funN;		//函数体
+		Output _output;
 
 		std::vector<Token> _tokens;
 		std::size_t _offset;

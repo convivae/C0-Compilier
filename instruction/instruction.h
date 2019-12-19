@@ -19,7 +19,7 @@ namespace cc0 {
 		loada,		//沿SL链向前移动level_diff次（移动到当前栈帧层次差为level_diff的栈帧中），加载该栈帧中栈偏移为offset的内存的栈地址值address。level_diff以16位无符号整数解释,offset以32位有符号整数解释
 		_new,		//不能直接写new，改为了hnew，弹出栈顶的int值count，在堆上分配连续的大小为count个slot的内存，然后将这段内存的首地址address压入栈。内存的值保证被初始化为0。
 		snew,		//在栈顶连续分配大小为 count个slot的内存,内存的值不保证被初始化为0,count以32位无符号整数解释
-		iload,		//从内存地址address处加载一个指定类型的值,address可能是栈地址也可能是堆地址
+		iload,		//从内存地址address处加载一个指定类型的值,address可能是栈地址也可能是堆地址|..., address(1)| ..., value(T)
 		dload,		//从内存地址address处加载一个指定类型的值,address可能是栈地址也可能是堆地址
 		aload,		//从内存地址address处加载一个指定类型的值,address可能是栈地址也可能是堆地址
 		iaload,		//将地址address视为数组首地址，加载数组下标为index处的指定类型的值value,address可能是栈地址也可能是堆地址
@@ -157,26 +157,26 @@ namespace cc0 {
 	public:
 		friend void swap(Instruction& lhs, Instruction& rhs);
 	public:
-		Instruction(int32_t index, Operation opr, int32_t x, int32_t y) : _opr(opr), _x(x), _y(y), _index(index) {}
+		Instruction(Operation opr, int32_t x, int32_t y) : _opr(opr), _param1(x), _param2(y) {}
 		
 		//Instruction() : Instruction(Operation::ILL, 0){}
-		Instruction(const Instruction& i) { _opr = i._opr; _x = i._x; _y = i._y; }
+		Instruction(const Instruction& i) { _opr = i._opr; _param1 = i._param1; _param2 = i._param2; }
 		//Instruction(Instruction&& i) :Instruction() { swap(*this, i); }
 		Instruction& operator=(Instruction i) { swap(*this, i); return *this; }
-		bool operator==(const Instruction& i) const { return _opr == i._opr && _x == i._x && _y == i._y; }
+		bool operator==(const Instruction& i) const { return _opr == i._opr && _param1 == i._param1 && _param2 == i._param2; }
 
 		Operation GetOperation() const { return _opr; }
-		int32_t GetX() const { return _x; }
-		int32_t GetY() const { return _y; }
+		int32_t GetX() const { return _param1; }
+		int32_t GetY() const { return _param2; }
 	private:
 		Operation _opr;
-		int32_t _x, _y, _index;
+		int32_t _param1, _param2;
 	};
 
 	inline void swap(Instruction& lhs, Instruction& rhs) {
 		using std::swap;
 		swap(lhs._opr, rhs._opr);
-		swap(lhs._x, rhs._x);
-		swap(lhs._y, rhs._y);
+		swap(lhs._param1, rhs._param1);
+		swap(lhs._param2, rhs._param2);
 	}
 }
