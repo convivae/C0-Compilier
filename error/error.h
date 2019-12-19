@@ -37,6 +37,8 @@ namespace cc0 {
 		ErrInvalidAssignment,
 		ErrInvalidPrint,
 		ErrIncompleteBrackets,	
+		ErrInvalidVoidDeclaration,	//void 不能出现在变量声明当中
+		ErrInvalidVoidParameterDeclaration,
 	};
 
 	class CompilationError final{

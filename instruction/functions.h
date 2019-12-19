@@ -11,6 +11,7 @@ namespace cc0 {
 		friend void swap(Functions& lhs, Functions& rhs);
 	public:
 		Functions(int32_t nameIndex, int32_t paramSize, int32_t level) : _nameIndex(nameIndex), _paramSize(paramSize), _level(level) {}
+		Functions(int32_t nameIndex, int32_t paramSize) : _nameIndex(nameIndex), _paramSize(paramSize), _level(1) {}
 		Functions(const Functions& i) { _nameIndex = i._nameIndex; _paramSize = i._paramSize; _level = i._level; }
 		Functions& operator=(Functions i) { swap(*this, i); return *this; }
 		bool operator==(const Functions& i) const { return _nameIndex == i._nameIndex && _paramSize == i._paramSize && _level == i._level; }

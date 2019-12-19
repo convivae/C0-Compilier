@@ -83,11 +83,16 @@ namespace cc0 {
 	// 变量声明，包括const，放入.constants中，另外，需要分配内存
 	// TODO 考虑类型转化，函数return等问题
 	std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
+		bool isConst = false;	//记录是否存在const
+		
 		// const
 		// TODO const修饰的变量必须被显式初始化
 		auto next = nextToken(); // [<const-qualifier>]
-		if(!next.has_value() && next.value().GetType() == TokenType::CONST) {
+		if (!next.has_value())
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+		if(next.value().GetType() == TokenType::CONST) {
 			next = nextToken();
+			isConst = true;
 		}
 
 		// <type-specifier>
@@ -95,16 +100,15 @@ namespace cc0 {
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
 		if(next.value().GetType() == TokenType::VOID) {
 			// void 不能参与变量的声明 (void 和 const void 都不行)
-			
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidVoidDeclaration);
 		}
-		else if(next.value().GetType() == TokenType::INT) {
-			//TODO
-			//生成编译语句
-		}
-		else {//error
+
+		if(next.value().GetType() != TokenType::INT) { //如果不考虑double，这里没有int就是error
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
 		}
-		auto err = analyseInitDeclaratorList();
+
+		// <init-declarator-list>
+		auto err = analyseInitDeclaratorList(isConst);
 		if (err.has_value())
 			return err;
 
@@ -116,22 +120,38 @@ namespace cc0 {
 		return {};
 	}
 
-	// <init-declarator-list> ::= 
-	// <init-declarator>{',' <init-declarator> }
+	// <init-declarator-list> ::= <init-declarator>{',' <init-declarator> }
 	// <init-declarator> ::= <identifier>[<initializer>]
 	// <initializer> ::= '=' < expression >
 	// TODO 生成汇编
-	std::optional<CompilationError> Analyser::analyseInitDeclaratorList() {
+	std::optional<CompilationError> Analyser::analyseInitDeclaratorList(const bool isConst) {
 		// <init-declarator>
 		auto next = nextToken();
 		if(!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
+		if (isDeclared(next.value().GetValueString()))
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrDuplicateDeclaration);
+
+		auto tmpIdentifier = next;	//此时不知道后面有没有等号，还不知道要把标识符添加到哪里
 		
 		next = nextToken(); //[<initializer>]
-		if(!next.has_value() || next.value().GetType() != TokenType::EQUAL_SIGN)
+		if(!next.has_value() || next.value().GetType() != TokenType::EQUAL_SIGN) {
 			unreadToken();
-		else {
-			auto err = analyseExpression();
+			if(isConst) {//为const结果没有等号初始化，error
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotInitialized);
+			}
+			else {//不是const，也没有等号初始化
+				addUninitializedVariable(tmpIdentifier.value());
+				_output._start.emplace_back(Operation::snew, 1, 0);
+			}
+		}
+			
+		else {	//有等号，根据是否是const加入已经初始化的列表里面
+			isConst ? addConstant(tmpIdentifier.value()) : addVariable(tmpIdentifier.value());
+			_output._start.emplace_back(Operation::snew, 1, 0);
+
+			//经过这一步就可以将上面的空间中填入具体的值
+			auto err = analyseExpression(TableType::START_TYPE);
 			if (err.has_value())
 				return err;
 		}
@@ -149,12 +169,28 @@ namespace cc0 {
 			next = nextToken();
 			if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
 				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
+			if (isDeclared(next.value().GetValueString()))
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrDuplicateDeclaration);
+
+			tmpIdentifier = next;	//此时不知道后面有没有等号，还不知道要把标识符添加到哪里
 
 			next = nextToken(); //[<initializer>]
-			if (!next.has_value() || next.value().GetType() != TokenType::EQUAL_SIGN)
+			if (!next.has_value() || next.value().GetType() != TokenType::EQUAL_SIGN) {
 				unreadToken();
-			else {
-				auto err = analyseExpression();
+				if (isConst) {//为const结果没有等号初始化，error
+					return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotInitialized);
+				}
+				else {//不是const，也没有等号初始化，类似 int a; 在栈上为其分配内存空间
+					addUninitializedVariable(tmpIdentifier.value());
+					_output._start.emplace_back(Operation::snew, 1, 0);
+				}
+			}
+			else {	//有等号，根据是否是const加入已经初始化的列表里面,并在栈上分配内存空间
+				isConst ? addConstant(tmpIdentifier.value()) : addVariable(tmpIdentifier.value());
+				_output._start.emplace_back(Operation::snew, 1, 0);
+				
+				//经过这一步就可以将上面的空间中填入具体的值
+				auto err = analyseExpression(TableType::START_TYPE);
 				if (err.has_value())
 					return err;
 			}
@@ -164,43 +200,66 @@ namespace cc0 {
 
 	// <function-definition> ::= 
 	// <type-specifier><identifier><parameter-clause><compound-statement>
-
 	std::optional<CompilationError> Analyser::analyseFunctionDeclaration() {
 		// <type-specifier>
 		auto next = nextToken();
 		if (!next.has_value() || (next.value().GetType() != TokenType::VOID && next.value().GetType() != TokenType::INT))
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
 
+		auto type = next.value().GetType();	//记录下是void还是int
+
 		// <identifier>
 		next = nextToken();
 		if(!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
+		if (isDeclared(next.value().GetValueString()))
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrDuplicateDeclaration);
 
-		// <parameter-clause>
-		auto err = analyseParameterClause();
+		if (type == TokenType::VOID) { 
+			addVoidFunctions(next.value());
+		}
+
+		if (type == TokenType::INT) {
+			addIntFunctions(next.value());
+		}
+
+		// 添加到常量表
+		auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
+		_output._constants.emplace_back(tmp_constants);
+		auto pos = getPos(_output._constants, tmp_constants);
+		
+		int32_t paramSize = 0;
+		// <parameter-clause> 参数列表
+		auto err = analyseParameterClause(paramSize);
 		if (err.has_value())
 			return err;
 
+		// 添加到函数表
+		_output._functions.emplace_back(pos, paramSize);
+
 		// <compound-statement>
-		
+		err = analyseCompoundStatement();
+		if (err.has_value())
+			return err;
 		
 		return {};
 	}
 
 	// <parameter-clause> ::= '('[<parameter-declaration-list>] ')'
-	std::optional<CompilationError> Analyser::analyseParameterClause() {
+	//TODO 参数不可能是 void
+	std::optional<CompilationError> Analyser::analyseParameterClause(int32_t& paramSize) {
 		// (
 		auto next = nextToken();
 		if (!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS)
-			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrEOF);
 
 		//[<parameter-declaration-list>]
 		next = nextToken();
 		if(!next.has_value())
-			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrEOF);
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
 		if(next.value().GetType() != TokenType::RIGHT_PARENTHESIS) {
 			unreadToken();
-			auto err = analyseParameterDeclarationList();
+			auto err = analyseParameterDeclarationList(paramSize);
 			if (err.has_value())
 				return err;
 		}
@@ -212,12 +271,16 @@ namespace cc0 {
 		return {};
 	}
 
-	// <parameter-declaration-list > :: =<parameter-declaration>{ ',' <parameter-declaration> }
-	std::optional<CompilationError> Analyser::analyseParameterDeclarationList() {
+	// <parameter-declaration-list> :: =<parameter-declaration>{ ',' <parameter-declaration> }
+	std::optional<CompilationError> Analyser::analyseParameterDeclarationList(int32_t& paramSize) {
+		//参数不能重复声明，每次调用先清空
+		_parameterDeclarationList.clear();
+		
 		//<parameter-declaration>
 		auto err = analyseParameterDeclaration();
 		if (err.has_value())
 			return err;
+		paramSize++;	//这里只可能是int，故只加一，没有考虑 double
 
 		//{ ',' <parameter-declaration> }
 		while (true) {
@@ -232,12 +295,14 @@ namespace cc0 {
 			err = analyseParameterDeclaration();
 			if (err.has_value())
 				return err;
+			paramSize++;
 		}
 		return {};
 	}
 
 	// <parameter-declaration> :: =[<const-qualifier>]<type-specifier><identifier>
 	std::optional<CompilationError> Analyser::analyseParameterDeclaration() {
+		// const的参数需要存到函数自己对应的地方，不能被更改
 		//const
 		auto  next = nextToken();
 		if (next.has_value() && next.value().GetType() == TokenType::CONST) {
@@ -252,13 +317,8 @@ namespace cc0 {
 		if (!next.has_value() || (next.value().GetType() != TokenType::VOID && next.value().GetType() != TokenType::INT))
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
 
-		if (next.value().GetType() == TokenType::VOID) {
-			next = nextToken();
-			if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER) {
-				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
-			}
-			//TODO
-			//生成编译语句
+		if (next.value().GetType() == TokenType::VOID) { //error
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidVoidParameterDeclaration);
 		}
 		else if (next.value().GetType() == TokenType::INT) {
 			next = nextToken();
@@ -685,7 +745,9 @@ namespace cc0 {
 	}
 
 	// <expression> :: = <additive-expression>
-	std::optional<CompilationError> Analyser::analyseExpression(){
+	// 参数是为了判断将汇编代码加入到哪个符号表里
+	// type表示符号表，index只在type=fun_n_type时有用，用来标识哪个函数
+	std::optional<CompilationError> Analyser::analyseExpression(TableType type, int32_t index = -1){// TODO 此处可能会调用常量表中的内容
 		auto err = analyseAdditiveExpression();
 		if (err.has_value())
 			return err;
@@ -910,6 +972,14 @@ namespace cc0 {
 		_add(tk, _uninitialized_vars);
 	}
 
+	void Analyser::addVoidFunctions(const Token& tk) {
+		_add(tk, _void_funs);
+	}
+
+	void Analyser::addIntFunctions(const Token& tk) {
+		_add(tk, _int_funs);
+	}
+
 	int32_t Analyser::getIndex(const std::string& s) {
 		if (_uninitialized_vars.find(s) != _uninitialized_vars.end())
 			return _uninitialized_vars[s];
@@ -919,8 +989,8 @@ namespace cc0 {
 			return _consts[s];
 	}
 
-	bool Analyser::isDeclared(const std::string& s) {
-		return isConstant(s) || isUninitializedVariable(s) || isInitializedVariable(s);
+	bool Analyser::isDeclared(const std::string& s) { //变量和函数重名也算重命名
+		return isConstant(s) || isUninitializedVariable(s) || isInitializedVariable(s) || isVoidFun(s) || isIntFun(s);
 	}
 
 	bool Analyser::isUninitializedVariable(const std::string& s) {
@@ -933,5 +1003,57 @@ namespace cc0 {
 
 	bool Analyser::isConstant(const std::string&s) {
 		return _consts.find(s) != _consts.end();
+	}
+
+	bool Analyser::isVoidFun(const std::string& s) {
+		return _void_funs.find(s) != _void_funs.end();
+	}
+
+	bool Analyser::isIntFun(const std::string& s) {
+		return _int_funs.find(s) != _int_funs.end();
+	}
+
+	int32_t Analyser::getPos(std::vector<Constants> source, const Constants& value) const {
+		const auto iter = std::find(source.begin(), source.end(), value);
+		if (iter != source.end())
+			return iter - source.begin(); 
+		DieAndPrint("can not find value in table");
+	}
+
+	//根据变量名找位置
+	int32_t Analyser::getPos(std::vector<Constants> source, const std::string& value) const {
+		try {
+			for (auto iter = source.begin(); iter != source.end(); ++iter) {
+				if(std::get<0>(iter->GetValue()) == value) {
+					return iter - source.begin();
+				}
+			}
+		}
+		catch (const std::bad_variant_access&) {
+			DieAndPrint("bad variant access");
+		}	
+		DieAndPrint("can not find value in table");
+	}
+	
+	int32_t Analyser::getPos(std::vector<Functions> source, const Functions& value) const {
+		const auto iter = std::find(source.begin(), source.end(), value);
+		if (iter != source.end())
+			return iter - source.begin();
+		DieAndPrint("can not find value in table");
+	}
+
+	//根据变量名找位置
+	int32_t Analyser::getPos(std::vector<Functions> source, const std::string& value) const {
+		try {
+			for (auto iter = source.begin(); iter != source.end(); ++iter) {
+				if (std::get<0>(_output._constants[iter->GetNameIndex()].GetValue()) == value) {
+					return iter - source.begin();
+				}
+			}
+		}
+		catch (const std::bad_variant_access&) {
+			DieAndPrint("bad variant access");
+		}
+		DieAndPrint("can not find value in table");
 	}
 }
