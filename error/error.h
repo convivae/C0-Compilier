@@ -39,6 +39,9 @@ namespace cc0 {
 		ErrIncompleteBrackets,	
 		ErrInvalidVoidDeclaration,	//void 不能出现在变量声明当中
 		ErrInvalidVoidParameterDeclaration,
+		ErrIntFunReturnByVoid,
+		ErrVoidFunReturnByInt,
+		ErrAssignToFunction,
 	};
 
 	class CompilationError final{

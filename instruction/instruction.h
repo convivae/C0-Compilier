@@ -157,7 +157,7 @@ namespace cc0 {
 	public:
 		friend void swap(Instruction& lhs, Instruction& rhs);
 	public:
-		Instruction(Operation opr, int32_t x, int32_t y) : _opr(opr), _param1(x), _param2(y) {}
+		Instruction(Operation opr, int32_t param1, int32_t param2) : _opr(opr), _param1(param1), _param2(param2) {}
 		
 		//Instruction() : Instruction(Operation::ILL, 0){}
 		Instruction(const Instruction& i) { _opr = i._opr; _param1 = i._param1; _param2 = i._param2; }
@@ -168,6 +168,8 @@ namespace cc0 {
 		Operation GetOperation() const { return _opr; }
 		int32_t GetX() const { return _param1; }
 		int32_t GetY() const { return _param2; }
+		void SetX(const int32_t label1) { this->_param1 = label1; }
+		void SetY(const int32_t label2) { this->_param1 = label2; }
 	private:
 		Operation _opr;
 		int32_t _param1, _param2;

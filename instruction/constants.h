@@ -18,7 +18,7 @@ namespace cc0 {
 	public:
 		friend void swap(Constants& lhs, Constants& rhs);
 	public:
-		Constants(const Type t, std::variant<std::string, std::int32_t, double> v) : _type(t), _value(std::move(v)) {}
+		Constants(const Type type, std::variant<std::string, std::int32_t, double> value) : _type(type), _value(std::move(value)) {}
 		Constants(const Constants& i) { _value = i._value; _type = i._type; }
 		Constants& operator=(Constants i) { swap(*this, i); return *this; }
 		bool operator==(const Constants& i) const { return _value == i._value && _type == i._type; }

@@ -269,17 +269,64 @@ namespace fmt {
 			case cc0::dup:
 			case cc0::dup2:
 			case cc0::_new:
+			case cc0::iload:
+			case cc0::dload:
+			case cc0::aload:
+			case cc0::iaload:
+			case cc0::daload:
+			case cc0::aaload:
+			case cc0::istore:
+			case cc0::dstore:
+			case cc0::astore:
+			case cc0::iastore:
+			case cc0::dastore:
+			case cc0::aastore:
+			case cc0::iadd:
+			case cc0::dadd:
+			case cc0::isub:
+			case cc0::dsub:
+			case cc0::imul:
+			case cc0::dmul:
+			case cc0::idiv:
+			case cc0::ddiv:
+			case cc0::ineg:
+			case cc0::dneg:
+			case cc0::icmp:
+			case cc0::dcmp:
+			case cc0::i2d:
+			case cc0::d2i:
+			case cc0::i2c:
+			case cc0::ret:
+			case cc0::iret:
+			case cc0::dret:
+			case cc0::aret:
+			case cc0::iprint:
+			case cc0::dprint:
+			case cc0::cprint:
+			case cc0::sprint:
+			case cc0::printl:
+			case cc0::iscan:
+			case cc0::dscan:
+			case cc0::cscan:
 				return format_to(ctx.out(), "{}", p.GetOperation());
 			case cc0::bipush:
 			case cc0::ipush:
 			case cc0::popn:
 			case cc0::loadc:
 			case cc0::snew:
+			case cc0::jmp:
+			case cc0::je:
+			case cc0::jne:
+			case cc0::jl:
+			case cc0::jge:
+			case cc0::jg:
+			case cc0::jle:
+			case cc0::call:
 				return format_to(ctx.out(), "{} {}", p.GetOperation(), p.GetX());
 			case cc0::loada:
 				return format_to(ctx.out(), "{} {} {}", p.GetOperation(), p.GetX(),p.GetY());
 			}
-			return format_to(ctx.out(), "ILL");
+			return format_to(ctx.out(), "nop");
 		}
 	};
 }
