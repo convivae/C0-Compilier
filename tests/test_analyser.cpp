@@ -1,91 +1,92 @@
 #include "catch2/catch.hpp"
-#include "simple_vm.hpp"
+#include "vm/vm.h"
+#include "fmts.hpp"
 #include "instruction/instruction.h"
 #include "tokenizer/tokenizer.h"
 #include "analyser/analyser.h"
 
 #include <sstream>
 
-// auto format(const cc0::Operation& p, int num) {
-// 	std::string name;
-// 	std::string ss = std::to_string(num);
-//
-// 	switch (p) {
-// 	case cc0::ILL:
-// 		name = "ILL"; name += "\t" + ss;
-// 		break;
-// 	case cc0::ADD:
-// 		name = "ADD";
-// 		break;
-// 	case cc0::SUB:
-// 		name = "SUB";
-// 		break;
-// 	case cc0::MUL:
-// 		name = "MUL";
-// 		break;
-// 	case cc0::DIV:
-// 		name = "DIV";
-// 		break;
-// 	case cc0::WRT:
-// 		name = "WRT";
-// 		break;
-// 	case cc0::LIT:
-// 		name = "LIT"; name += "\t" + ss;
-// 		break;
-// 	case cc0::LOD:
-// 		name = "LOD"; name += "\t" + ss;
-// 		break;
-// 	case cc0::STO:
-// 		name = "STO"; name += "\t" + ss;
-// 		break;
-// 	}
-// 	return name;
-// }
+void printAnalyser(std::pair<cc0::Output, std::optional<cc0::CompilationError>>& p)
+{
+	// .constants
+	std::cout << fmt::format("{}\n", ".constants:");
+	auto _index = 0;
+	auto con = p.first._constants;
 
-///*自己造的样例*/
-//TEST_CASE("Test Base Analyser") {
-//	std::string input =
-//		"begin\n"
-//		"	var a = 3;\n"
-//		"	var c;\n"
-//		"	c = a + -100;\n"
-//		"	print(a + c);\n"
-//		"	print(a + c * 10 / (3 + 5) - 4);\n"
-//		"end\n";
-//	std::stringstream ss;
-//	ss.str(input);
-//	cc0::Tokenizer tkz(ss);
-//	std::vector<int32_t> output = {
-//		-94,-122
-//	};
-//	//词法分析
-//	auto result = tkz.AllTokens();
-//	if (result.second.has_value()) {
-//		FAIL();
-//	}
-//
-//	//语法分析
-//	cc0::Analyser anz(result.first);
-//	auto anz_res = anz.Analyse();
-//	if (anz_res.second.has_value()) {
-//		FAIL();
-//	}
-//
-//	//虚拟机
-//	auto vm = cc0::VM(anz_res.first);
-//	auto vm_res = vm.Run();
-//
-//	//输出
-//	// for (auto i : anz_res.first) {
-//	// 	std::cout << format(i.GetOperation(), i.GetX()) << std::endl;
-//	// }
-//	// for(auto i : vm_res) {
-//	// 	std::cout << "output:" << std::endl;
-//	// 	std::cout << '\t' << i << std::endl;
-//	// }
-//
-//	REQUIRE(vm_res == output);
-//}
+	for (auto& it : con) {
+		auto name = std::get<std::string>(it.GetValue());
+		std::cout << fmt::format("{} {} \"{}\"\n", _index++, it.GetType(), name);
+	}
+
+	// .start
+	std::cout << fmt::format("{}\n", ".start:");
+	_index = 0;
+	auto sta = p.first._start;
+	for (auto& it : sta) {
+		std::cout << fmt::format("{} {}\n", _index++, it);
+	}
+
+    std::vector<std::string> names;
+	// .functions
+	std::cout << fmt::format("{}\n", ".functions:");
+	_index = 0;
+	auto fun = p.first._functions;
+	for (auto& it : fun) {
+        std::string name = std::get<std::string>(p.first._constants.at(it.GetNameIndex()).GetValue());
+		names.push_back(name);
+		std::cout << fmt::format("{} {} {} {}\n", _index++, it.GetNameIndex(), it.GetParamSize(), it.GetLevel());
+	}
+
+	// .funN
+	auto _fun_index = 0;
+	for (auto iter : p.first._funN) {
+		std::cout << fmt::format(".F{}: # {}\n", _fun_index,names.at(_fun_index));
+		_fun_index++;
+		_index = 0;
+		for (auto j : iter) {
+			std::cout << fmt::format("{} {}\n", _index++, j);
+		}
+	}
+}
+
+/*自己造的样例*/
+TEST_CASE("Test Base Analyser") {
+	std::string input =
+        "int fun(int num) {\n"
+        "    return -num;\n"
+        "}\n"
+        "\n"
+        "int main() {\n"
+        "    return fun(-123456);\n"
+        "}\n";
+	std::stringstream ss;
+	ss.str(input);
+	cc0::Tokenizer tkz(ss);
+
+	//词法分析
+	std::cout << "\nTokenizer\n" << std::endl;
+	auto result = tkz.AllTokens();
+
+	for (auto i : result.first) {
+		std::cout << fmt::format("{}\n", i);
+	}
+
+	if (result.second.has_value()) {
+		fmt::print(stderr, "Tokenization error: {}\n", result.second.value());
+		FAIL();
+	}
+
+	//语法分析
+	std::cout << "\nAnalyser\n" << std::endl;
+	cc0::Analyser anz(result.first);
+	auto anz_res = anz.Analyse();
+	if (anz_res.second.has_value()) {
+		fmt::print(stderr, "Syntactic analysis error: {}\n", anz_res.second.value());
+		FAIL();
+	}
+	printAnalyser(anz_res);
+}
 //
 //TEST_CASE("Test Analyser CONST NEED VALUE") {
 //	std::string input =

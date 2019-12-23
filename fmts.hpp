@@ -69,6 +69,36 @@ namespace fmt {
 			case cc0::ErrIncompleteBrackets:
 				name = "The brackets is incomplete.";
 				break;
+			case cc0::ErrIntFunReturnByVoid:
+				name = "The Function must have a return value";
+				break;
+			case cc0::ErrVoidFunReturnByInt:
+				name = "Trying to return value in void function";
+				break;
+			case cc0::ErrAssignToFunction:
+				name = "Function name can't be assigned";
+				break;
+			case cc0::ErrFunctionNotExist:
+				name = "The function doesn't exist";
+				break;
+			case cc0::ErrInvalidVoidDeclaration:
+				name = "The declaration of variable can't be void";
+				break;
+			case cc0::ErrInvalidVoidParameterDeclaration:
+				name = "The parameter of a function can't be void";
+				break;
+			case cc0::ErrParameterMismatch:
+				name = "The parameter number doesn't match";
+				break;
+			case cc0::ErrUnexpectedError:
+				name = "Unexpected Error";
+				break;
+			case cc0::ErrNeedReturnExpression:
+				name = "Need a return expression here";
+				break;
+			case cc0::ErrCallFunctionInGlobalArea:
+				name = "can't call a function in global area";
+				break;
 			}
 			return format_to(ctx.out(), name);
 		}
@@ -95,7 +125,7 @@ namespace fmt {
 		template <typename FormatContext>
 		auto format(const cc0::Token &p, FormatContext &ctx) {
 			return format_to(ctx.out(),
-				"Line: {} Column: {} Type: {} Value: {}",
+				"Line: {}\tColumn: {}\tType: {}\t \tValue:\t{}",
 				p.GetStartPos().first, p.GetStartPos().second, p.GetType(), p.GetValueString());
 		}
 	};

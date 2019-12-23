@@ -104,6 +104,9 @@ namespace cc0 {
 		void addVariable(const Token&);
 		void addConstant(const Token&);
 		void addUninitializedVariable(const Token&);
+		// 变量后来被初始化，转换其对应的位置
+		void transUninitVarToInitVar(const Token& tk);
+		void transLocalUninitVarToLocalInitVar(const Token& tk);
 		//添加void、int函数
 		void addVoidFunctions(const Token& tk);	//用来判断是否声明过以及return什么
 		void addIntFunctions(const Token& tk);	//用来判断是否声明过以及return什么

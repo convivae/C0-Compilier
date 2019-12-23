@@ -37,14 +37,17 @@ namespace cc0 {
 		ErrInvalidAssignment,
 		ErrInvalidPrint,
 		ErrIncompleteBrackets,	
-		ErrInvalidVoidDeclaration,	//void ���ܳ����ڱ�����������
+		ErrInvalidVoidDeclaration,	//void 变量声明不能是void
 		ErrInvalidVoidParameterDeclaration,
 		ErrIntFunReturnByVoid,
 		ErrVoidFunReturnByInt,
 		ErrAssignToFunction,
         ErrFunctionNotExist,
         ErrParameterMismatch,
-
+		ErrUnexpectedError,
+		ErrNeedReturnExpression,
+		ErrCallFunctionInGlobalArea,
+		
 	};
 
 	class CompilationError final{

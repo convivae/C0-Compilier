@@ -62,7 +62,6 @@ enable_testing()
 set(test_src
 	tests/test_main.cpp
 	tests/test_tokenizer.cpp
-	tests/simple_vm.hpp
 	tests/test_analyser.cpp
 )
 

@@ -2,6 +2,7 @@
 
 #include <climits>
 
+//TODO 赋值给未初始化的变量，需要挪动位置
 namespace cc0 {
     std::pair<Output, std::optional<CompilationError>> Analyser::Analyse() {
         auto err = analyseProgram();
@@ -95,8 +96,7 @@ namespace cc0 {
         }
 
         // <type-specifier>
-        if (!next.has_value() ||
-            (next.value().GetType() != TokenType::VOID && next.value().GetType() != TokenType::INT))
+        if (!next.has_value())
             return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
         if (next.value().GetType() == TokenType::VOID) {
             // void 不能参与变量的声明 (void 和 const void 都不行)
@@ -157,11 +157,10 @@ namespace cc0 {
         } else {    //有等号，根据是否是const加入已经初始化的列表里面
             if (type == TableType::START_TYPE) {
                 isConst ? addConstant(tmpIdentifier.value()) : addVariable(tmpIdentifier.value());
-                _output._start.emplace_back(Operation::snew, 1, 0);
+            	//由于后面求出值之后自然会入栈，此处无需分配存储空间
             } else {
                 isConst ? addLocalConstant(tmpIdentifier.value()) : addLocalVariable(tmpIdentifier.value());
                 const int32_t fun_num = _output._constants.size();
-                _output._funN[fun_num - 1].emplace_back(Operation::snew, 1, 0);
             }
 
             //经过这一步就可以将上面的空间中填入具体的值
@@ -301,12 +300,13 @@ namespace cc0 {
             auto err = analyseParameterDeclarationList(paramSize);
             if (err.has_value())
                 return err;
+			// )
+			next = nextToken();
+			if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
         }
 
-        // )
-        next = nextToken();
-        if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
-            return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+    	//else )
         return {};
     }
 
@@ -416,6 +416,15 @@ namespace cc0 {
         if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_BRACE)
             return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
 
+		const auto fun_num = _output._constants.size();
+    	
+    	//没有返回语句
+    	if(_output._functions[fun_num-1].GetHasDetectedRetOrNot() == false) {
+    		if(isIntFun(fun_num-1))
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedReturnExpression);
+			_output._funN[fun_num - 1].emplace_back(Operation::ret, 0, 0);
+    	}
+
         return {};
     }
 
@@ -429,6 +438,7 @@ namespace cc0 {
                 unreadToken();
                 return {};
             }
+			unreadToken();
             auto err = analyseStatement();
             if (err.has_value())
                 return err;
@@ -718,17 +728,12 @@ namespace cc0 {
         const int32_t fun_num = _output._constants.size();
         bool isInt = isIntFun(fun_num - 1);
 
+		_output._functions[fun_num - 1].SetFindRetExpression();	//表明有返回函数
+
         // return
         auto next = nextToken();
-        if (!next.has_value() || next.value().GetType() != TokenType::RETURN) {
-            //由于void函数可以不写return，所以不能因为没有return就简单判错
-            if (isInt)
-                return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
-            else {
-                unreadToken();
-                _output._funN[fun_num - 1].emplace_back(Operation::iret, 0, 0);
-                return {};
-            }
+        if (!next.has_value() || next.value().GetType() != TokenType::RETURN) {	//不该运行到这一句
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrUnexpectedError);
         }
 
         // [<expression>] ';'
@@ -741,20 +746,22 @@ namespace cc0 {
             if (!isInt)
                 return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrVoidFunReturnByInt);
 
+			unreadToken();
             auto err = analyseExpression(TableType::FUN_N_TYPE);
             if (err.has_value())
                 return err;
             _output._funN[fun_num - 1].emplace_back(Operation::iret, 0, 0);
-        } else {    //返回值应该是void
+
+			// ;
+			next = nextToken();
+			if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
+        }
+    	else {    //返回值应该是void
             if (isInt)
                 return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIntFunReturnByVoid);
             _output._funN[fun_num - 1].emplace_back(Operation::ret, 0, 0);
         }
-
-        // ;
-        next = nextToken();
-        if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
-            return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
 
         return {};
     }
@@ -775,18 +782,16 @@ namespace cc0 {
         next = nextToken();
         if (!next.has_value())
             return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
-        else if (next.value().GetType() == TokenType::RIGHT_PARENTHESIS) {//print为空
-            unreadToken();
-        } else {
-            auto err = analysePrintableList();
-            if (err.has_value())
-                return err;
+        if (next.value().GetType() != TokenType::RIGHT_PARENTHESIS) {//print为空
+			unreadToken();
+			auto err = analysePrintableList();
+			if (err.has_value())
+				return err;
+			// )
+			next = nextToken();
+			if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
         }
-
-        // )
-        next = nextToken();
-        if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
-            return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
 
         // ;
         next = nextToken();
@@ -856,6 +861,7 @@ namespace cc0 {
 
                 //局部能找到的，栈帧都是 0
                 _output._funN[fun_num - 1].emplace_back(Operation::loada, 0, index_tmp);
+				_output._funN[fun_num - 1].emplace_back(Operation::iload, 0, 0);
                 _output._funN[fun_num - 1].emplace_back(Operation::iscan, 0, 0);
             }
         } else if (isIntFun(s) || isVoidFun(s)) {
@@ -868,6 +874,7 @@ namespace cc0 {
 
                 //局部能找到的，栈帧是 1
                 _output._funN[fun_num - 1].emplace_back(Operation::loada, 1, index_tmp);
+				_output._funN[fun_num - 1].emplace_back(Operation::iload, 0, 0);
                 _output._funN[fun_num - 1].emplace_back(Operation::iscan, 0, 0);
             }
         } else { //赋值给没声明过的变量
@@ -907,6 +914,7 @@ namespace cc0 {
 
                 //局部能找到的，栈帧都是 0
                 _output._funN[fun_num - 1].emplace_back(Operation::loada, 0, index_tmp);
+				_output._funN[fun_num - 1].emplace_back(Operation::iload, 0, 0);
             }
 
         } else if (isDeclared(s)) {    //全局声明
@@ -917,6 +925,7 @@ namespace cc0 {
 
                 //局部能找到的，栈帧是 1
                 _output._funN[fun_num - 1].emplace_back(Operation::loada, 1, index_tmp);
+				_output._funN[fun_num - 1].emplace_back(Operation::iload, 0, 0);
             }
 
         } else { //赋值给没声明过的变量
@@ -1052,6 +1061,7 @@ namespace cc0 {
         } else if (tk_type == TokenType::MINUS_SIGN) {
             isNeg = true;
         } else {
+			isNeg = false;
             unreadToken();
         }
         auto err = analysePrimaryExpression(type);
@@ -1109,13 +1119,22 @@ namespace cc0 {
                         }
                         auto index_tmp = getIndex(s);
                         _output._start.emplace_back(Operation::loada, 1, index_tmp);
+						_output._start.emplace_back(Operation::iload, 0, 0);
                     } else {  //局部变量
-                        // TODO 需要检查这些基础函数以及最初add的函数是否有错
+                        // 局部找不到就去全局找
                         if (!isLocalConstant(s) && !isLocalInitializedVariable(s)) {
-                            return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotInitialized);
+							if (!isConstant(s) && !isInitializedVariable(s))
+								return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotInitialized);
+							auto index_tmp = getIndex(s);
+							_output._funN[fun_num - 1].emplace_back(Operation::loada, 1, index_tmp);
+							_output._funN[fun_num - 1].emplace_back(Operation::iload, 0, 0);
                         }
-                        auto index_tmp = getLocalIndex(s);
-                        _output._funN[fun_num - 1].emplace_back(Operation::loada, 0, index_tmp);
+                    	else {
+							auto index_tmp = getLocalIndex(s);
+							_output._funN[fun_num - 1].emplace_back(Operation::loada, 0, index_tmp);
+							_output._funN[fun_num - 1].emplace_back(Operation::iload, 0, 0);
+                        }
+                        
                     }
 
                     return {};
@@ -1139,6 +1158,8 @@ namespace cc0 {
                     _output._funN[fun_num - 1].emplace_back(Operation::ipush, num_tmp, 0);
                 }
                 break;
+			default:
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrUnexpectedError);
         }
         return {};
     }
@@ -1159,6 +1180,8 @@ namespace cc0 {
 
         //因为参数只能是int型的，所以函数表中有他的参数个数信息
         auto _expect_param_num = getParamsNum(s);
+		auto _fun_index = getFunctionIndexInConstants(s);
+		const int32_t fun_num = _output._constants.size();
 
         // (
         next = nextToken();
@@ -1171,6 +1194,8 @@ namespace cc0 {
         if (!next.has_value())
             return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
 
+		unreadToken();
+    	
         // 存在可选项
         if (next.value().GetType() != TokenType::RIGHT_PARENTHESIS) {
             auto err = analyseExpressionList(type, _actual_param_num);
@@ -1185,13 +1210,19 @@ namespace cc0 {
             if(_actual_param_num != _expect_param_num){
                 return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrParameterMismatch);
             }
-            return {};
         }
 
         // )
         next = nextToken();
         if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_PARENTHESIS)
             return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
+
+    	if(type == TableType::FUN_N_TYPE) {
+			_output._funN[fun_num - 1].emplace_back(Operation::call, _fun_index, 0);
+    	}
+		else {	//在全局变量里不能调用函数
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrCallFunctionInGlobalArea);
+		}
 
         return {};
     }
@@ -1243,7 +1274,7 @@ namespace cc0 {
         _nextTokenIndex++;
     }
 
-    void Analyser::addVariable(const Token &tk) {
+    void Analyser::addVariable(const Token &tk) {	//已经用等号初始化的
         _add(tk, _vars);
     }
 
@@ -1251,9 +1282,35 @@ namespace cc0 {
         _add(tk, _consts);
     }
 
-    void Analyser::addUninitializedVariable(const Token &tk) {
-        _add(tk, _uninitialized_vars);
+    void Analyser::addUninitializedVariable(const Token &tk) {	//未用等号初始化的
+		_add(tk, _uninitialized_vars);
     }
+
+	void Analyser::transUninitVarToInitVar(const Token& tk) {	//全局变量未初始化的后来初始化了
+		if (tk.GetType() != TokenType::IDENTIFIER)
+			DieAndPrint("only identifier can be added to the table.");
+
+		const auto tmp = _uninitialized_vars.find(tk.GetValueString());
+
+		if (tmp == _uninitialized_vars.end())
+			DieAndPrint("can not find this identifier in global uninitialized vars");
+
+		_vars.insert(std::make_pair(tk.GetValueString(), tmp->second));	//先增后删，位置不能改变
+		_uninitialized_vars.erase(tk.GetValueString());
+	}
+
+	void Analyser::transLocalUninitVarToLocalInitVar(const Token& tk) {	//局部变量未初始化的后来初始化了
+		if (tk.GetType() != TokenType::IDENTIFIER)
+			DieAndPrint("only identifier can be added to the table.");
+
+		const auto tmp = _local_uninitialized_vars.find(tk.GetValueString());
+
+		if (tmp == _local_uninitialized_vars.end())
+			DieAndPrint("can not find this identifier in global uninitialized vars");
+
+		_local_vars.insert(std::make_pair(tk.GetValueString(), tmp->second));	//先增后删，位置不能改变
+		_local_uninitialized_vars.erase(tk.GetValueString());
+	}
 
     void Analyser::addVoidFunctions(const Token &tk) {
         _add(tk, _void_funs);
@@ -1270,7 +1327,7 @@ namespace cc0 {
         _nextLocalTokenIndex++;
     }
 
-    void Analyser::addLocalVariable(const Token &tk) {
+    void Analyser::addLocalVariable(const Token &tk) {	//已经初始化的
         _add_local(tk, _local_vars);
     }
 

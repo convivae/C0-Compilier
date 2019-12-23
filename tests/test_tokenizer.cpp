@@ -7,15 +7,15 @@
 
 /* 自己构造的测试用例 */
 TEST_CASE("Token Base Test") {
-	std::string input =
-		"begin\n"
-		"	const b == a > b <= c != a;\n"
-		"	var a = 1;\n"
-		"	print(a+b);\n"
-		"end\n";
-	std::stringstream ss;
-	ss.str(input);
-	cc0::Tokenizer tkz(ss);
+	// std::string input =
+	// 	"begin\n"
+	// 	"	const b == a > b <= c != a;\n"
+	// 	"	var a = 1;\n"
+	// 	"	print(a+b);\n"
+	// 	"end\n";
+	// std::stringstream ss;
+	// ss.str(input);
+	// cc0::Tokenizer tkz(ss);
 //	std::vector<cc0::Token> output = {
 //		cc0::Token(cc0::BEGIN,std::string("begin"),0,0,0,5),
 //		cc0::Token(cc0::CONST,std::string("const"),1,1,1,6),
@@ -37,18 +37,18 @@ TEST_CASE("Token Base Test") {
 //		cc0::Token(cc0::SEMICOLON,';',3,11,3,12),
 //		cc0::Token(cc0::END,std::string("end"),4,0,4,3),
 //	};
-	auto result = tkz.AllTokens();
-
-	if (result.second.has_value()) {
-		std::cout << result.second->GetCode() << std::endl;
-		FAIL();
-	}
-
-	//调试输出
-	 for (auto i : result.first) {
-	 	std::cout << i.GetType() << '\t' << "start " << i.GetStartPos().first << '\t' << i.GetStartPos().second \
-	 		<< "\tend " << i.GetEndPos().first << '\t' << i.GetEndPos().second << '\t' << i.GetValueString() << std::endl;
-	 }
+	// auto result = tkz.AllTokens();
+	//
+	// if (result.second.has_value()) {
+	// 	std::cout << result.second->GetCode() << std::endl;
+	// 	FAIL();
+	// }
+	//
+	// //调试输出
+	//  for (auto i : result.first) {
+	//  	std::cout << i.GetType() << '\t' << "start " << i.GetStartPos().first << '\t' << i.GetStartPos().second \
+	//  		<< "\tend " << i.GetEndPos().first << '\t' << i.GetEndPos().second << '\t' << i.GetValueString() << std::endl;
+	//  }
 
 	//REQUIRE(result.first == output);
 }

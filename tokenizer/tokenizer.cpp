@@ -168,8 +168,8 @@ namespace cc0 {
 					}
 				}
 				else {
-					//TODO 此处未考虑浮点数
-					ss << current_char.value();
+					//十进制数
+					unreadLast();
 					current_state = DFAState::DECIMAL_STATE;
 				}
 				break;
