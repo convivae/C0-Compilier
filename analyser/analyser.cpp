@@ -510,7 +510,7 @@ namespace cc0 {
                 } else if (next.value().GetType() == TokenType::LEFT_PARENTHESIS) {
                     unreadToken();
                     unreadToken();
-                    err = analyseFunctionCall();
+                    err = analyseFunctionCall(TableType::FUN_N_TYPE);
                     if (err.has_value())
                         return err;
                     // ;

@@ -25,7 +25,7 @@ void Tokenize(std::istream& input, std::ostream& output) {
 	return;
 }
 
-void Analyse(std::istream& input, std::ostream& output){
+void Analyse(std::istream& input, std::ostream& output) {
 	auto tks = _tokenize(input);
 	cc0::Analyser analyser(tks);
 	auto p = analyser.Analyse();
@@ -33,14 +33,48 @@ void Analyse(std::istream& input, std::ostream& output){
 		fmt::print(stderr, "Syntactic analysis error: {}\n", p.second.value());
 		exit(2);
 	}
-	auto v = p.first;
-	for (auto& it : v)
-		output << fmt::format("{}\n", it);
+
+	// .constants
+	output << fmt::format("{}\n", ".constants:");
+	auto _index = 0;
+	auto con = p.first._constants;
+	
+	for (auto& it : con) {
+		auto name = std::get<std::string>(it.GetValue());
+		output << fmt::format("{} {} {}\n", _index++, it.GetType(), name);
+	}
+
+	// .start
+	output << fmt::format("{}\n", ".start:");
+	_index = 0;
+	auto sta = p.first._start;
+	for (auto& it : sta) {
+		output << fmt::format("{} {}\n", _index++, it);
+	}
+
+	// .functions
+	output << fmt::format("{}\n", ".functions:");
+	_index = 0;
+	auto fun = p.first._functions;
+	for (auto& it : fun) {
+		output << fmt::format("{} {} {} {}\n", _index++, it.GetNameIndex(), it.GetParamSize(), it.GetLevel());
+	}
+
+	// .funN
+	auto _fun_index = 0;
+	for (auto iter : p.first._funN) {
+		output << fmt::format(".F{}\n", _fun_index++);
+		_index = 0;
+		for (auto j : iter) {
+			output << fmt::format("{} {}\n", _index++, j);
+		}
+	}
+
 	return;
 }
 
 int main(int argc, char** argv) {
-	argparse::ArgumentParser program("cc0");
+	argparse::ArgumentParser program("c0");
 	program.add_argument("input")
 		.help("speicify the file to be compiled.");
 	program.add_argument("-t")
@@ -59,7 +93,7 @@ int main(int argc, char** argv) {
 	try {
 		program.parse_args(argc, argv);
 	}
-	catch (const std::runtime_error& err) {
+	catch (const std::runtime_error & err) {
 		fmt::print(stderr, "{}\n\n", err.what());
 		program.print_help();
 		exit(2);

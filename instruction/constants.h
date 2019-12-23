@@ -23,7 +23,7 @@ namespace cc0 {
 		Constants& operator=(Constants i) { swap(*this, i); return *this; }
 		bool operator==(const Constants& i) const { return _value == i._value && _type == i._type; }
 
-		std::string GetType() { nameOfType(_type); }
+		std::string GetType() { return nameOfType(_type); }
 		auto GetValue() const { return _value; }
 	private:
 		Type _type;
