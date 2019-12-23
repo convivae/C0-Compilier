@@ -37,11 +37,14 @@ namespace cc0 {
 		ErrInvalidAssignment,
 		ErrInvalidPrint,
 		ErrIncompleteBrackets,	
-		ErrInvalidVoidDeclaration,	//void ²»ÄÜ³öÏÖÔÚ±äÁ¿ÉùÃ÷µ±ÖÐ
+		ErrInvalidVoidDeclaration,	//void ï¿½ï¿½ï¿½Ü³ï¿½ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		ErrInvalidVoidParameterDeclaration,
 		ErrIntFunReturnByVoid,
 		ErrVoidFunReturnByInt,
 		ErrAssignToFunction,
+        ErrFunctionNotExist,
+        ErrParameterMismatch,
+
 	};
 
 	class CompilationError final{

@@ -65,8 +65,8 @@ namespace cc0 {
 		std::optional<CompilationError> analyseStatementSeq();
 		std::optional<CompilationError> analyseStatement();
 		std::optional<CompilationError> analyseCondition(int32_t& label1);
-		std::optional<CompilationError> analyseFunctionCall();
-		std::optional<CompilationError> analyseExpressionList();
+		std::optional<CompilationError> analyseFunctionCall(TableType type);
+		std::optional<CompilationError> analyseExpressionList(TableType type, int32_t& paramSize);
 		std::optional<CompilationError> analyseAssignmentExpression();
 		std::optional<CompilationError> analyseScanStatement();
 		std::optional<CompilationError> analysePrintStatement();
@@ -133,6 +133,10 @@ namespace cc0 {
 		// 获得 {变量，常量} 在栈上的偏移
 		int32_t getIndex(const std::string&);
 		int32_t getLocalIndex(const std::string& s);
+
+		int32_t getFunctionIndexInConstants(const std::string& s);
+
+		int32_t getParamsNum(const std::string& s); //得到函数的参数个数
 
 		//每次函数调用前清空局部变量
 		void localClear();
