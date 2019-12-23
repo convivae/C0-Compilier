@@ -1098,6 +1098,7 @@ namespace cc0 {
 	// 	| <integer-literal>
 	// 	| <function-call>
 	std::optional<CompilationError> Analyser::analysePrimaryExpression(TableType type) {
+		const int32_t fun_num = _output._constants.size();
 		auto next = nextToken();
 		if(!next.has_value())
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
@@ -1117,12 +1118,30 @@ namespace cc0 {
 			break;
 
 		case TokenType::IDENTIFIER://两种情况，<identifier> 和 <function-call>
+			auto s = next.value().GetValueString();
 			next = nextToken();
 
 			//是 <identifier>
 			if(!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS) {
 				unreadToken();
-				//TODO
+				if(type == TableType::START_TYPE) {	//这是全局变量
+					//是否const
+					//不是const的话，是否初始化
+					if(!isConstant(s) && !isInitializedVariable(s)) {
+						return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotInitialized);
+					}
+					auto index_tmp = getIndex(s);
+					_output._start.emplace_back(Operation::loada, 1, index_tmp);
+				}
+				else {
+					// TODO 需要检查这些基础函数以及最初add的函数是否有错
+					if(!isLocalConstant(s) && !isLocalInitializedVariable(s)) {
+						return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotInitialized);
+					}
+					auto index_tmp = getLocalIndex(s);
+					_output._funN[fun_num-1].emplace_back(Operation::loada, 0, index_tmp);
+				}
+				
 				return {};
 			}
 
