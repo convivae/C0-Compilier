@@ -6,7 +6,7 @@
 #include <vector>
 
 /* 自己构造的测试用例 */
-TEST_CASE("Token Base Test") {
+//TEST_CASE("Token Base Test") {
 	// std::string input =
 	// 	"begin\n"
 	// 	"	const b == a > b <= c != a;\n"
@@ -51,69 +51,69 @@ TEST_CASE("Token Base Test") {
 	//  }
 
 	//REQUIRE(result.first == output);
-}
+//}
 
-/* 助教给的测试用例 */
-TEST_CASE("empty_file") {
-	std::string input =
-		"";
-	std::stringstream ss;
-	ss.str(input);
-	cc0::Tokenizer tkz(ss);
-	std::vector<cc0::Token> output = {};
-	auto result = tkz.AllTokens();
-
-	if (result.second.has_value()) {
-		FAIL();
-	}
-
-	REQUIRE(result.first.empty());
-}
-
-TEST_CASE("whitespaces") {
-    std::string input =
-            "   \t     \t   \t            \n\r"
-            " \n"
-            "\t\t  \t\t\t\n"
-            " \n"
-            "\n"
-            " \n"
-            "\t\n"
-            " \n"
-            "  \n"
-            " \n"
-            "\t  \t\n"
-            "\t  \n"
-            "\t \n"
-            " \n"
-            "\n"
-            " \n"
-            "\n"
-            " \n"
-            "\n"
-            " \t \t \n"
-            " \n"
-            " \t \t \t \n"
-            "\t \t \t \n"
-            " \n"
-            "\n"
-            " \n"
-            "\t \t \n"
-            "\n"
-            "\n"
-            " ";
-    std::stringstream ss;
-    ss.str(input);
-    cc0::Tokenizer tkz(ss);
-    std::vector<cc0::Token> output = {};
-    auto result = tkz.AllTokens();
-
-    if (result.second.has_value()) {
-        FAIL();
-    }
-
-    REQUIRE(result.first.empty());
-}
+// /* 助教给的测试用例 */
+// TEST_CASE("empty_file") {
+// 	std::string input =
+// 		"";
+// 	std::stringstream ss;
+// 	ss.str(input);
+// 	cc0::Tokenizer tkz(ss);
+// 	std::vector<cc0::Token> output = {};
+// 	auto result = tkz.AllTokens();
+//
+// 	if (result.second.has_value()) {
+// 		FAIL();
+// 	}
+//
+// 	REQUIRE(result.first.empty());
+// }
+//
+// TEST_CASE("whitespaces") {
+//     std::string input =
+//             "   \t     \t   \t            \n\r"
+//             " \n"
+//             "\t\t  \t\t\t\n"
+//             " \n"
+//             "\n"
+//             " \n"
+//             "\t\n"
+//             " \n"
+//             "  \n"
+//             " \n"
+//             "\t  \t\n"
+//             "\t  \n"
+//             "\t \n"
+//             " \n"
+//             "\n"
+//             " \n"
+//             "\n"
+//             " \n"
+//             "\n"
+//             " \t \t \n"
+//             " \n"
+//             " \t \t \t \n"
+//             "\t \t \t \n"
+//             " \n"
+//             "\n"
+//             " \n"
+//             "\t \t \n"
+//             "\n"
+//             "\n"
+//             " ";
+//     std::stringstream ss;
+//     ss.str(input);
+//     cc0::Tokenizer tkz(ss);
+//     std::vector<cc0::Token> output = {};
+//     auto result = tkz.AllTokens();
+//
+//     if (result.second.has_value()) {
+//         FAIL();
+//     }
+//
+//     REQUIRE(result.first.empty());
+// }
 
 //TEST_CASE("identifiers") {
 //	std::string input =

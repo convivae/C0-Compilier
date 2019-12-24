@@ -589,3 +589,293 @@ File File::parse_file_text(std::ifstream& in) {
 
     return File{0x00000001, std::move(constants), std::move(start), std::move(functions)};
 }
+
+File File::parse_file_text(std::stringstream& in) {
+	int line_count = 0;
+	std::string line = "";
+	std::string str = "";
+	std::stringstream ss;
+	const auto readLine = [&]() {
+		while (std::getline(in, line)) {
+			++line_count;
+			int bg = 0;
+			int ed = line.length();
+			// remove comment
+			for (auto i = bg; i < ed; ++i) {
+				if (line[i] == '#') {
+					ed = i;
+					break;
+				}
+			}
+			// remove leading and trailing whitespaces
+			line = trim(std::move(line));
+			// not a blank line     
+			if (line.size() != 0) {
+				ss.str(line);
+				ss.clear();
+				return;
+			}
+		}
+		// eof
+		line = "";
+		ss.str("");
+	};
+	const auto reuseLine = [&]() {
+		ss.str(line);
+		ss.clear();
+	};
+	const auto errorLineInfo = [&]() {
+		println(std::cerr, "line", line_count, ":\n   ", line);
+	};
+	const auto errorInvalidFile = [&](std::string msg) {
+		errorLineInfo();
+		throw InvalidFile(msg);
+	};
+#define errorIf(cond, msg)    do { if ((cond)) { errorInvalidFile((msg)); } } while(false)
+#define errorIfNot(cond, msg) errorIf(!(cond), (msg))
+#define errorIfAssignFailed(lhs, rhs, msg) do { try { lhs = (rhs); } catch (const std::exception&) { errorIf(true, (msg)); } } while(false)
+	auto ensureNoMoreInput = [&]() {
+		if (char ch; ss >> std::skipws >> ch) {
+			errorIf(true, "invalid line");
+		}
+	};
+
+	readLine();
+
+	// parse constants
+	std::vector<vm::Constant> constants;
+	ss >> str;
+	if (str == ".constants:") {
+		ensureNoMoreInput();
+		while (true) {
+			// {index} {type} {value}
+			readLine();
+			vm::Constant constant;
+			std::string temp;
+			int index;
+			std::string type;
+			std::string value;
+			// eof
+			if (!(ss >> temp)) {
+				reuseLine(); break;
+			}
+			// parse index
+			try {
+				index = try_to_int(temp);
+			}
+			catch (const std::exception&) {
+				reuseLine(); break;
+			}
+			errorIf(index != constants.size(), "unordered index");
+			errorIfNot(ss >> type, "constant type expected");
+			if (type == "S") {
+				constant.type = vm::Constant::Type::STRING;
+				char ch;
+				errorIfNot(ss >> std::skipws >> ch, "string constant expected");
+				errorIf(ch != '\"', "no leading qoute for string constant");
+				// parse the content of string
+				while (true) {
+					errorIfNot(ss.get(ch), "no trailing quote for string constant");
+					if (ch == '\"') {
+						break;
+					}
+					if (ch == '\\') {
+						errorIfNot(ss.get(ch), "incomplete escape seq");
+						switch (ch) {
+						case '\\': value += '\\'; break;
+						case '\'': value += '\''; break;
+						case '\"': value += '\"'; break;
+						case 'n':  value += '\n'; break;
+						case 'r':  value += '\r'; break;
+						case 't':  value += '\t'; break;
+						case 'x': {
+							errorIfNot(ss.get(ch), "incomplete hex escape seq");
+							errorIfNot(is_hex_digit(ch), "invalid hex escape seq");
+							char v = (0xff & hex_digit_to_int(ch)) << 4;
+							errorIfNot(ss.get(ch), "incomplete hex escape seq");
+							errorIfNot(is_hex_digit(ch), "invalid hex escape seq");
+							v |= (0xff & hex_digit_to_int(ch));
+							value += v;
+						}; break;
+						default: errorIf(true, strfmt("unknown escape seq \"\\{}\"", ch));
+						}
+					}
+					else {
+						value += ch;
+					}
+				}
+				errorIf(value.length() > UINT16_MAX, "too long the string constant");
+				constant.value = std::move(value);
+			}
+			else if (type == "I") {
+				constant.type = vm::Constant::Type::INT;
+				errorIfNot(ss >> std::skipws >> value, "invalid format");
+				errorIfAssignFailed(constant.value, try_to_int(value), "out of range or invalid format");
+			}
+			else if (type == "D") {
+				constant.type = vm::Constant::Type::DOUBLE;
+				errorIfNot(ss >> std::skipws >> value, "invalid format");
+				errorIfAssignFailed(constant.value, try_to_double(value), "out of range or invalid format");
+			}
+			else {
+				errorIf(true, "invalid constant type");
+			}
+			constants.push_back(std::move(constant));
+			ensureNoMoreInput();
+		}
+	}
+	else {
+		errorIf(true, ".constants expected");
+	}
+	errorIf(constants.size() > U2_MAX, "too many constants");
+
+	// parse instructions
+	auto parseInstructions = [&]() {
+		std::vector<vm::Instruction> rtv;
+		while (true) {
+			// {index} {opcode} {param1} {param2}
+			readLine();
+			std::string temp;
+			int index;
+			std::string opName;
+			// eof
+			if (!(ss >> temp)) {
+				reuseLine(); break;
+			}
+			// parse index
+			try {
+				index = try_to_int(temp);
+			}
+			catch (const std::exception&) {
+				reuseLine(); break;
+			}
+			errorIf(index != rtv.size(), "unordered index");
+			errorIfNot(ss >> opName, "opcode expected");
+			opName = to_lower(opName);
+			vm::Instruction ins;
+			if (auto it = vm::opCodeOfName.find(opName); true) {
+				errorIf(it == vm::opCodeOfName.end(), "no such opcode");
+				ins.op = it->second;
+			}
+			if (auto it = vm::paramSizeOfOpCode.find(ins.op); it != vm::paramSizeOfOpCode.end()) {
+				int paramCount = it->second.size();
+				std::string restLine;
+				errorIfNot(std::getline(ss, restLine), "parameters expected");
+				auto params = split(restLine, ',');
+				errorIf(params.size() != paramCount,
+					strfmt("{} parameters expected, {} got", paramCount, params.size())
+				);
+				errorIfAssignFailed(ins.x, try_to_int(params[0]),
+					strfmt("invalid first parameter: {}", params[0])
+				);
+				if (paramCount == 2) {
+					errorIfAssignFailed(ins.y, try_to_int(params[1]),
+						strfmt("invalid second parameter: {}", params[1])
+					);
+				}
+			}
+			ensureNoMoreInput();
+			rtv.push_back(ins);
+		}
+		errorIf(rtv.size() > U2_MAX, "too many instructions");
+		return rtv;
+	};
+
+	// parse start
+	std::vector<vm::Instruction> start;
+	ss >> str;
+	if (str == ".start:") {
+		ensureNoMoreInput();
+		start = std::move(parseInstructions());
+	}
+	else {
+		errorIf(true, ".start expected");
+	}
+
+	// parse functions
+	std::vector<vm::Function> functions;
+	bool mainFound = false;
+	ss >> str;
+	if (str == ".functions:") {
+		ensureNoMoreInput();
+		while (true) {
+			// {index} {nameIndex} {paramSize} {level}
+			readLine();
+			vm::Function function;
+			std::string temp;
+			int index;
+			// no more function
+			if (!(ss >> temp)) {
+				reuseLine(); break;
+			}
+			// parse index
+			try {
+				index = try_to_int(temp);
+			}
+			catch (const std::exception&) {
+				reuseLine(); break;
+			}
+			errorIf(index != functions.size(), "unordered index");
+			errorIfNot(ss >> temp, "name_index expected");
+			errorIfAssignFailed(function.nameIndex, try_to_int(temp), "invalid name_index");
+			errorIf(function.nameIndex >= constants.size(), "name not found");
+			errorIf(constants[function.nameIndex].type != vm::Constant::Type::STRING, "name not found");
+			if (std::get<vm::str_t>(constants[function.nameIndex].value) == "main") {
+				mainFound = true;
+			}
+			errorIfNot(ss >> temp, "param_size expected");
+			errorIfAssignFailed(function.paramSize, try_to_int(temp), "invalid param_size");
+			errorIf(function.paramSize > U2_MAX, "too many parameters");
+			errorIfNot(ss >> temp, "level expected");
+			errorIfAssignFailed(function.level, try_to_int(temp), "invalid level");
+			errorIf(function.level > U2_MAX, "too high the level");
+			functions.push_back(std::move(function));
+			ensureNoMoreInput();
+		}
+	}
+	else {
+		errorIf(true, ".functions expected");
+	}
+	errorIfNot(mainFound, "main() not found");
+
+	int functions_count = functions.size();
+	errorIf(functions_count > U2_MAX, "too many functions");
+	for (int i = 0; i < functions_count; ++i) {
+		errorIfNot(ss >> str, strfmt("\".F{}:\" expected", i));
+		errorIf((str.length() < 2 || str.back() != ':'), strfmt("\".F{}:\" expected", i));
+		str.pop_back();
+
+		int index = -1;
+		if (str.front() == '.') {
+			str.erase(str.begin());
+			ss.str(str);
+			ss.clear();
+			char ch;
+			ss >> std::skipws >> ch;
+			if ((ch == 'F' || ch == 'f')) {
+				// .Fx
+				std::string temp;
+				errorIfNot(ss >> temp, strfmt("\".F{}:\" expected", i));
+				errorIfAssignFailed(index, try_to_int(temp), "invalid function index");
+				errorIf(index != i, strfmt("\".F{}:\" expected", i));
+			}
+		}
+		else {
+			// str is name
+			index = -1;
+			for (auto j = 0; j < functions_count; ++j) {
+				if (std::get<std::string>(constants.at(functions.at(j).nameIndex).value) == str) {
+					index = j;
+					break;
+				}
+			}
+		}
+		ensureNoMoreInput();
+		errorIf(index < 0, "no such function");
+		functions.at(index).instructions = std::move(parseInstructions());
+	}
+
+	errorIf(in >> str, "unused content");
+
+	return File{ 0x00000001, std::move(constants), std::move(start), std::move(functions) };
+}

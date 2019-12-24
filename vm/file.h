@@ -21,6 +21,7 @@ struct File
     File(vm::u4, std::vector<vm::Constant>, std::vector<vm::Instruction>, std::vector<vm::Function>);
 
     static File parse_file_text(std::ifstream& in);
+	static File parse_file_text(std::stringstream& in);
     static File parse_file_binary(std::ifstream& in);
     void output_text(std::ostream& out);
     void output_binary(std::ofstream& out);

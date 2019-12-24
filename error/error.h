@@ -47,7 +47,8 @@ namespace cc0 {
 		ErrUnexpectedError,
 		ErrNeedReturnExpression,
 		ErrCallFunctionInGlobalArea,
-		
+		ErrNeedMainFunction,
+		ErrDectedFloatingPointNumber,
 	};
 
 	class CompilationError final{

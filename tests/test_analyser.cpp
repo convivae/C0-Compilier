@@ -7,59 +7,32 @@
 
 #include <sstream>
 
-void printAnalyser(std::pair<cc0::Output, std::optional<cc0::CompilationError>>& p)
-{
-	// .constants
-	std::cout << fmt::format("{}\n", ".constants:");
-	auto _index = 0;
-	auto con = p.first._constants;
+/*Analyser*/
+void printAnalyser(std::pair<cc0::Output, std::optional<cc0::CompilationError>>& p, std::stringstream& output);
 
-	for (auto& it : con) {
-		auto name = std::get<std::string>(it.GetValue());
-		std::cout << fmt::format("{} {} \"{}\"\n", _index++, it.GetType(), name);
-	}
-
-	// .start
-	std::cout << fmt::format("{}\n", ".start:");
-	_index = 0;
-	auto sta = p.first._start;
-	for (auto& it : sta) {
-		std::cout << fmt::format("{} {}\n", _index++, it);
-	}
-
-    std::vector<std::string> names;
-	// .functions
-	std::cout << fmt::format("{}\n", ".functions:");
-	_index = 0;
-	auto fun = p.first._functions;
-	for (auto& it : fun) {
-        std::string name = std::get<std::string>(p.first._constants.at(it.GetNameIndex()).GetValue());
-		names.push_back(name);
-		std::cout << fmt::format("{} {} {} {}\n", _index++, it.GetNameIndex(), it.GetParamSize(), it.GetLevel());
-	}
-
-	// .funN
-	auto _fun_index = 0;
-	for (auto iter : p.first._funN) {
-		std::cout << fmt::format(".F{}: # {}\n", _fun_index,names.at(_fun_index));
-		_fun_index++;
-		_index = 0;
-		for (auto j : iter) {
-			std::cout << fmt::format("{} {}\n", _index++, j);
-		}
-	}
-}
+/*VM*/
+void assemble_and_run(std::stringstream& in);
 
 /*自己造的样例*/
 TEST_CASE("Test Base Analyser") {
 	std::string input =
-        "int fun(int num) {\n"
-        "    return -num;\n"
+        "void hanoi(int n, int a, int b, int c) {\n"
+        "\tif (n == 1) {\n"
+        "\t\tprint(a, 0x00, c);\n"
+        "\t}\n"
+        "\telse {\n"
+        "\t\thanoi(n-1, a, c, b);\n"
+        "\t\tprint(a, 0x00, c);\n"
+        "\t\thanoi(n-1, b, a, c);\n"
+        "\t\t\n"
+        "\t}\n"
         "}\n"
         "\n"
         "int main() {\n"
-        "    return fun(-123456);\n"
-        "}\n";
+        "\thanoi(3, 1, 2, 3);\n"
+		"\tprint(1);\n"
+        "\treturn 0;\n"
+        "}";
 	std::stringstream ss;
 	ss.str(input);
 	cc0::Tokenizer tkz(ss);
@@ -85,7 +58,15 @@ TEST_CASE("Test Base Analyser") {
 		fmt::print(stderr, "Syntactic analysis error: {}\n", anz_res.second.value());
 		FAIL();
 	}
-	printAnalyser(anz_res);
+
+	ss.clear();
+	ss.str("");
+	printAnalyser(anz_res, ss);
+	std::cout << ss.str() << std::endl;
+
+	std::cout << "Result:" << std::endl;
+	assemble_and_run(ss);
+	std::cout << std::endl;
 }
 //
 //TEST_CASE("Test Analyser CONST NEED VALUE") {
@@ -501,3 +482,61 @@ TEST_CASE("Test Base Analyser") {
 //
 //	REQUIRE(anz_res.second->GetCode() == cc0::ErrNoEnd);
 //}
+//
+//
+//
+
+/*Analyser*/
+void printAnalyser(std::pair<cc0::Output, std::optional<cc0::CompilationError>>& p, std::stringstream& output)
+{
+	// .constants
+	output << fmt::format("{}\n", ".constants:");
+	auto _index = 0;
+	auto con = p.first._constants;
+
+	for (auto& it : con) {
+		auto name = std::get<std::string>(it.GetValue());
+		output << fmt::format("{} {} \"{}\"\n", _index++, it.GetType(), name);
+	}
+
+	// .start
+	output << fmt::format("{}\n", ".start:");
+	_index = 0;
+	auto sta = p.first._start;
+	for (auto& it : sta) {
+		output << fmt::format("{} {}\n", _index++, it);
+	}
+
+	std::vector<std::string> names;
+	// .functions
+	output << fmt::format("{}\n", ".functions:");
+	_index = 0;
+	auto fun = p.first._functions;
+	for (auto& it : fun) {
+		std::string name = std::get<std::string>(p.first._constants.at(it.GetNameIndex()).GetValue());
+		names.push_back(name);
+		output << fmt::format("{} {} {} {}\n", _index++, it.GetNameIndex(), it.GetParamSize(), it.GetLevel());
+	}
+
+	// .funN
+	auto _fun_index = 0;
+	for (auto iter : p.first._funN) {
+		output << fmt::format(".F{}: #{}\n", _fun_index, names.at(_fun_index));
+		_fun_index++;
+		_index = 0;
+		for (auto j : iter) {
+			output << fmt::format("{} {}\n", _index++, j);
+		}
+	}
+}
+
+void assemble_and_run(std::stringstream& in) {
+	try {
+		File f = File::parse_file_text(in);
+		auto avm = std::move(vm::VM::make_vm(f));
+		avm->start();
+	}
+	catch (const std::exception & e) {
+		println(std::cerr, e.what());
+	}
+}

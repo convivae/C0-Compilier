@@ -210,7 +210,7 @@ namespace cc0 {
 			}
 			case FLOATING_POINT_STATE: {
 				//TODO 留待扩展C0处理
-				return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrIntegerOverflow));
+				return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrorCode::ErrDectedFloatingPointNumber));
 			}
 
 			case HEXADECIMAL_STATE: {

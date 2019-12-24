@@ -70,34 +70,40 @@ namespace fmt {
 				name = "The brackets is incomplete.";
 				break;
 			case cc0::ErrIntFunReturnByVoid:
-				name = "The Function must have a return value";
+				name = "The Function must have a return value.";
 				break;
 			case cc0::ErrVoidFunReturnByInt:
-				name = "Trying to return value in void function";
+				name = "Trying to return value in void function.";
 				break;
 			case cc0::ErrAssignToFunction:
-				name = "Function name can't be assigned";
+				name = "Function name can't be assigned.";
 				break;
 			case cc0::ErrFunctionNotExist:
-				name = "The function doesn't exist";
+				name = "The function doesn't exist.";
 				break;
 			case cc0::ErrInvalidVoidDeclaration:
-				name = "The declaration of variable can't be void";
+				name = "The declaration of variable can't be void.";
 				break;
 			case cc0::ErrInvalidVoidParameterDeclaration:
-				name = "The parameter of a function can't be void";
+				name = "The parameter of a function can't be void.";
 				break;
 			case cc0::ErrParameterMismatch:
-				name = "The parameter number doesn't match";
+				name = "The parameter number doesn't match.";
 				break;
 			case cc0::ErrUnexpectedError:
 				name = "Unexpected Error";
 				break;
 			case cc0::ErrNeedReturnExpression:
-				name = "Need a return expression here";
+				name = "Need a return expression here.";
 				break;
 			case cc0::ErrCallFunctionInGlobalArea:
-				name = "can't call a function in global area";
+				name = "can't call a function in global area.";
+				break;
+			case cc0::ErrNeedMainFunction:
+				name = "Zai? Wei shen me bu xie main han shu.";
+				break;
+			case cc0::ErrDectedFloatingPointNumber:
+				name = "not support for floating number now";
 				break;
 			}
 			return format_to(ctx.out(), name);
@@ -354,7 +360,7 @@ namespace fmt {
 			case cc0::call:
 				return format_to(ctx.out(), "{} {}", p.GetOperation(), p.GetX());
 			case cc0::loada:
-				return format_to(ctx.out(), "{} {} {}", p.GetOperation(), p.GetX(),p.GetY());
+				return format_to(ctx.out(), "{} {}, {}", p.GetOperation(), p.GetX(),p.GetY());
 			}
 			return format_to(ctx.out(), "nop");
 		}

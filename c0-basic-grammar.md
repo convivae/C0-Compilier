@@ -53,7 +53,7 @@
 <init-declarator> ::= 
     <identifier>[<initializer>]
 <initializer> ::= 
-    '='<expression>    
+    '='<expression>
 
 
 <function-definition> ::= 
@@ -80,11 +80,11 @@
     |<scan-statement>
     |<assignment-expression>';'
     |<function-call>';'
-    |';'   
+    |';'
     
     
-<condition> ::= 
-     <expression>[<relational-operator><expression>] 
+<condition> ::=
+     <expression>[<relational-operator><expression>]
 
 <condition-statement> ::= 
      'if' '(' <condition> ')' <statement> ['else' <statement>]
@@ -128,3 +128,4 @@
 <expression-list> ::= 
     <expression>{','<expression>}
 ```
+
