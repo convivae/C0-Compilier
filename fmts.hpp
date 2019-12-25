@@ -103,7 +103,10 @@ namespace fmt {
 				name = "Zai? Wei shen me bu xie main han shu.";
 				break;
 			case cc0::ErrDectedFloatingPointNumber:
-				name = "not support for floating number now";
+				name = "Not support for floating number now";
+				break;
+			case cc0::ErrNeedStatement:
+				name = "Need a statement here";
 				break;
 			}
 			return format_to(ctx.out(), name);

@@ -22,7 +22,7 @@ namespace cc0 {
 
 		//跟随运行时的变化而变化
 		bool GetHasDetectedRetOrNot() { return this->_has_detected_ret; }
-		void SetFindRetExpression()  { this->_has_detected_ret = true; }
+		void SetFindRetExpression(bool stat)  { this->_has_detected_ret = stat; }
 
 	private:
 		int32_t _nameIndex;	//函数名在.constants中的下标

@@ -284,6 +284,9 @@ namespace cc0 {
 			}
 		}
 
+		// 每次函数的开始都要清空局部变量
+		localClear();
+
 		int32_t paramSize = 0;
 		// <parameter-clause> 参数列表
 		auto err = analyseParameterClause(paramSize);
@@ -330,9 +333,6 @@ namespace cc0 {
 
 	// <parameter-declaration-list> :: =<parameter-declaration>{ ',' <parameter-declaration> }
 	std::optional<CompilationError> Analyser::analyseParameterDeclarationList(int32_t& paramSize) {
-		// TODO 待评估 参数不能重复声明，每次调用先清空
-		localClear();
-
 		const auto fun_num = _output._constants.size();
 
 		//<parameter-declaration>
@@ -471,7 +471,7 @@ namespace cc0 {
 	std::optional<CompilationError> Analyser::analyseStatement() {
 		auto next = nextToken();
 		if (!next.has_value())
-			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidAssignment);
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedStatement);
 		std::optional<CompilationError> err;
 		std::string s;
 
@@ -520,7 +520,7 @@ namespace cc0 {
 			s = next.value().GetValueString();
 			next = nextToken();
 			if (!next.has_value())
-				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidAssignment);
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
 			if (next.value().GetType() == TokenType::EQUAL_SIGN) {
 				unreadToken();
 				unreadToken();
@@ -554,7 +554,7 @@ namespace cc0 {
 		case TokenType::SEMICOLON:
 			break;
 		default:
-			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidAssignment);
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedStatement);
 		}
 		return {};
 	}
@@ -644,6 +644,11 @@ namespace cc0 {
 		//回填地址
 		int32_t label1, label2;
 		const int32_t fun_num = _output._constants.size();
+
+		
+		//if语句和while语句中的return可能会影响到整个函数对于是否有return的判断，这里的return不能作数
+		const auto isRet = _output._functions[fun_num - 1].GetHasDetectedRetOrNot();
+		
 		// if
 		auto next = nextToken();
 		if (!next.has_value() || next.value().GetType() != TokenType::IF)
@@ -669,17 +674,22 @@ namespace cc0 {
 		if (err.has_value())
 			return err;
 
-		//label1 就在这，回填，指向下一条指令（下一条指令现在还没有）
-		const int32_t next_pos1 = _output._funN[fun_num - 1].size();
-		_output._funN[fun_num - 1][label1].SetX(next_pos1);
-
 		// ['else' <statement> ]
 		next = nextToken();
-		if (!next.has_value() || next.value().GetType() != TokenType::ELSE)    //没有else就不需要有label2
+		if (!next.has_value() || next.value().GetType() != TokenType::ELSE) {    //没有else就不需要有label2
+			//没有else的话，label1 就在这，回填，指向下一条指令（下一条指令现在还没有）
+			const int32_t next_pos1 = _output._funN[fun_num - 1].size();
+			_output._funN[fun_num - 1][label1].SetX(next_pos1);
+			unreadToken();
 			return {};
+		}
 
 		_output._funN[fun_num - 1].emplace_back(Operation::jmp, 0, 0);    //无条件跳转，先填入 0
 		label2 = _output._funN[fun_num - 1].size() - 1;    //记下label2的地址
+
+		//有else的话，label1 就在这（位于第二个jmp之后），回填，指向下一条指令（下一条指令现在还没有）
+		const int32_t next_pos1 = _output._funN[fun_num - 1].size();
+		_output._funN[fun_num - 1][label1].SetX(next_pos1);
 
 		// <statement>
 		err = analyseStatement();
@@ -690,15 +700,22 @@ namespace cc0 {
 		const int32_t next_pos2 = _output._funN[fun_num - 1].size();
 		_output._funN[fun_num - 1][label2].SetX(next_pos2);
 
+		//最后恢复关于是否有return的判断
+		_output._functions[fun_num - 1].SetFindRetExpression(isRet);
+
 		return {};
 	}
 
 	// <loop-statement> ::=
 	// 'while' '(' <condition> ')' <statement>
 	std::optional<CompilationError> Analyser::analyseLoopStatement() {
-		// 回填地址
-		int32_t label1, label2;
 		const int32_t fun_num = _output._constants.size();
+		// 回填地址
+		int32_t label1;
+
+		//if语句和while语句中的return可能会影响到整个函数对于是否有return的判断，这里的return不能作数
+		const auto isRet = _output._functions[fun_num - 1].GetHasDetectedRetOrNot();
+		
 		// while
 		auto next = nextToken();
 		if (!next.has_value() || next.value().GetType() != TokenType::WHILE)
@@ -709,9 +726,9 @@ namespace cc0 {
 		if (!next.has_value() || next.value().GetType() != TokenType::LEFT_PARENTHESIS)
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
 
-		//先获得label2的值，就是进入while的第一条语句，while的最后一句要无条件跳转过来
+		
+		//先获得进入while的第一条语句所在位置，while的最后一句要无条件跳转过来
 		const int32_t next_pos2 = _output._funN[fun_num - 1].size();
-		_output._funN[fun_num - 1][label2].SetX(next_pos2);
 
 		// <condition>
 		auto err = analyseCondition(label1);    //获得label1的值
@@ -729,11 +746,14 @@ namespace cc0 {
 			return err;
 
 		//最后一条指令，无条件跳转回第一句话
-		_output._funN[fun_num - 1].emplace_back(Operation::jmp, label2, 0);
+		_output._funN[fun_num - 1].emplace_back(Operation::jmp, next_pos2, 0);
 
 		//label1 就在最后一条指令之后，即while的外面。回填，指向下一条指令（下一条指令现在还没有）
 		const int32_t next_pos1 = _output._funN[fun_num - 1].size();
 		_output._funN[fun_num - 1][label1].SetX(next_pos1);
+
+		//最后恢复关于是否有return的判断
+		_output._functions[fun_num - 1].SetFindRetExpression(isRet);
 
 		return {};
 	}
@@ -751,7 +771,7 @@ namespace cc0 {
 		const int32_t fun_num = _output._constants.size();
 		bool isInt = isIntFun(fun_num - 1);
 
-		_output._functions[fun_num - 1].SetFindRetExpression();	//表明有返回函数
+		_output._functions[fun_num - 1].SetFindRetExpression(true);	//表明有返回函数
 
 		// return
 		auto next = nextToken();
@@ -887,6 +907,8 @@ namespace cc0 {
 				_output._funN[fun_num - 1].emplace_back(Operation::loada, 0, index_tmp);
 				_output._funN[fun_num - 1].emplace_back(Operation::iscan, 0, 0);
 				_output._funN[fun_num - 1].emplace_back(Operation::istore, 0, 0);
+
+				transLocalUninitVarToLocalInitVar(next.value());
 			}
 		}
 		else if (isIntFun(s) || isVoidFun(s)) {
@@ -899,10 +921,12 @@ namespace cc0 {
 			else {
 				auto index_tmp = getIndex(s);
 
-				//局部能找到的，栈帧是 1
+				//全局能找到的，栈帧是 1
 				_output._funN[fun_num - 1].emplace_back(Operation::loada, 1, index_tmp);
 				_output._funN[fun_num - 1].emplace_back(Operation::iscan, 0, 0);
 				_output._funN[fun_num - 1].emplace_back(Operation::istore, 0, 0);
+
+				transUninitVarToInitVar(next.value());
 			}
 		}
 		else { //赋值给没声明过的变量
@@ -1345,8 +1369,8 @@ namespace cc0 {
 
 		const auto tmp = _uninitialized_vars.find(tk.GetValueString());
 
-		if (tmp == _uninitialized_vars.end())
-			DieAndPrint("can not find this identifier in global uninitialized vars");
+		if (tmp == _uninitialized_vars.end())	//没有找到说明已经被初始化了，就不用管
+			return;
 
 		_vars.insert(std::make_pair(tk.GetValueString(), tmp->second));	//先增后删，位置不能改变
 		_uninitialized_vars.erase(tk.GetValueString());
@@ -1359,7 +1383,7 @@ namespace cc0 {
 		const auto tmp = _local_uninitialized_vars.find(tk.GetValueString());
 
 		if (tmp == _local_uninitialized_vars.end())
-			DieAndPrint("can not find this identifier in global uninitialized vars");
+			return;
 
 		_local_vars.insert(std::make_pair(tk.GetValueString(), tmp->second));	//先增后删，位置不能改变
 		_local_uninitialized_vars.erase(tk.GetValueString());

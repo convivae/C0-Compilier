@@ -49,6 +49,7 @@ namespace cc0 {
 		ErrCallFunctionInGlobalArea,
 		ErrNeedMainFunction,
 		ErrDectedFloatingPointNumber,
+		ErrNeedStatement,
 	};
 
 	class CompilationError final{
