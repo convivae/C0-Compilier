@@ -97,7 +97,7 @@ namespace cc0 {
 						current_state = DFAState::MULTIPLICATION_SIGN_STATE;
 						break;
 					case '/':
-						current_state = DFAState::DIVISION_SIGN_STATE;
+						current_state = DFAState::DIVISION_SIGN_AND_NOTE_STATE;
 						break;
 					case '<':
 						current_state = DFAState::LESS_SIGN_STATE;
@@ -143,7 +143,7 @@ namespace cc0 {
 					return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(pos, ErrorCode::ErrInvalidInput));
 				}
 				// 如果读到的字符导致了状态的转移，说明它是一个token的第一个字符
-				if (current_state != DFAState::INITIAL_STATE) // ignore white spaces
+				if (current_state != DFAState::INITIAL_STATE && current_state != DFAState::DIVISION_SIGN_AND_NOTE_STATE) // ignore white spaces and notes
 					ss << ch; // 存储读到的字符
 				break;
 			}
@@ -286,6 +286,54 @@ namespace cc0 {
 				}
 				break;
 			}
+
+			case DIVISION_SIGN_AND_NOTE_STATE: {
+				auto ch = current_char.value();
+				if(ch == '/') {
+					while(ch != '\n') {
+						current_char = nextChar();
+
+						//读到了文件尾
+						if (!current_char.has_value())
+							return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+						ch = current_char.value();
+					}
+					// 这里 \n 被舍弃
+				}
+				else if(ch == '*') {
+					bool detectedStar = false;
+					while(true) {
+						current_char = nextChar();
+
+						//读到了文件尾
+						if (!current_char.has_value())
+							return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+						ch = current_char.value();
+
+						if(detectedStar == true) {
+							if(ch == '/') {
+								break;	//注释结束
+							}
+							else {
+								detectedStar = false;	//仍在注释里面
+							}
+						}
+
+						if (ch == '*') {
+							detectedStar = true;
+						}
+					}
+				}
+				else {	//确定是除号
+					unreadLast();
+					return std::make_pair(std::make_optional<Token>(TokenType::DIVISION_SIGN, '/', pos, currentPos()), std::optional<CompilationError>());
+				}
+
+				//当前状态重新恢复为初始状态
+				current_state = DFAState::INITIAL_STATE;
+				
+				break;
+			}
 			case EQUAL_SIGN_STATE: {
 				auto ch = current_char.value();
 				
@@ -299,6 +347,7 @@ namespace cc0 {
 					ss >> str_value;
 					return std::make_pair(std::make_optional<Token>(TokenType::EQUAL_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
 				}
+				break;
 			}
 			case LESS_SIGN_STATE: {
 				auto ch = current_char.value();
@@ -313,6 +362,7 @@ namespace cc0 {
 					ss >> str_value;
 					return std::make_pair(std::make_optional<Token>(TokenType::LESS_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
 				}
+				break;
 			}
 
 			case ABOVE_SIGN_STATE: {
@@ -328,6 +378,7 @@ namespace cc0 {
 					ss >> str_value;
 					return std::make_pair(std::make_optional<Token>(TokenType::ABOVE_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
 				}
+				break;
 			}
 
 			case EXCLAMATION_SIGN_STATE: {
@@ -343,6 +394,7 @@ namespace cc0 {
 					ss >> str_value;
 					return std::make_pair(std::make_optional<Token>(TokenType::NOT_EQUAL_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
 				}
+				break;
 			}
 
 
@@ -361,10 +413,6 @@ namespace cc0 {
 			case MULTIPLICATION_SIGN_STATE: {
 				unreadLast();
 				return std::make_pair(std::make_optional<Token>(TokenType::MULTIPLICATION_SIGN, '*', pos, currentPos()), std::optional<CompilationError>());
-			}
-			case DIVISION_SIGN_STATE: {
-				unreadLast();
-				return std::make_pair(std::make_optional<Token>(TokenType::DIVISION_SIGN, '/', pos, currentPos()), std::optional<CompilationError>());
 			}
 			case SEMICOLON_STATE: {
 				unreadLast();
