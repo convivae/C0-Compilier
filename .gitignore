@@ -6,6 +6,8 @@ CMakeSettings.json
 *.c0
 *.txt
 !CMakeLists.txt
+c0-basic-grammar.md
+c0-grammar.md
 build
 out
 cmake-build-debug

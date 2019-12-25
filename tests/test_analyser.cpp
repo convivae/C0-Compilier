@@ -37,7 +37,7 @@ TEST_CASE("Test Base Analyser") {
         "int main() {\n"
         "    int i = 0;\n"
         "    while(i < 100){\n"
-        "        fun(i - 0.20);\n"
+        "        fun(i - 0x20);\n"
         "        print(num);\n"
         "        print(0,0,0);\n"
         "        i = i + 10;\n"
