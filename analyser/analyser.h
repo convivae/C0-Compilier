@@ -39,7 +39,7 @@ namespace cc0 {
 		Analyser(std::vector<Token> v)
 			: _tokens(std::move(v)), _offset(0), _output({}), _current_pos(0, 0),_main_index(-1),
 			_uninitialized_vars({}), _vars({}), _consts({}), _nextTokenIndex(0), _nextLocalTokenIndex(0),
-		fun_num(0){}
+		fun_num(0), string_num(0), index_in_con(0){}
 		Analyser(Analyser&&) = delete;
 		Analyser(const Analyser&) = delete;
 		Analyser& operator=(Analyser) = delete;
@@ -175,6 +175,8 @@ namespace cc0 {
 		//下一个 token 在栈的偏移，此处需要对不同的栈有所区分
 		int32_t _nextTokenIndex;
 		int32_t _nextLocalTokenIndex;
-		int32_t fun_num;
+		int32_t fun_num;	//在funN的位置
+		int32_t string_num;
+		int32_t index_in_con;	//在constants的位置
 	};
 }

@@ -279,10 +279,11 @@ namespace cc0 {
 			auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
 			_output._constants.emplace_back(tmp_constants);
 			pos = getPos(_output._constants, tmp_constants);
+			fun_num += 1;
+			index_in_con += 1;
 		}
 
 		//新增一个函数体
-		fun_num += 1;
 		_output._funN.resize(fun_num);
 
 		//确定main函数的位置
@@ -438,7 +439,7 @@ namespace cc0 {
 
 		//没有返回语句
 		if (_output._functions[fun_num - 1].GetHasDetectedRetOrNot() == false) {
-			if (isIntFun(fun_num - 1))
+			if (isIntFun(index_in_con - 1))
 				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedReturnExpression);
 			_output._funN[fun_num - 1].emplace_back(Operation::ret, 0, 0);
 		}
@@ -773,7 +774,8 @@ namespace cc0 {
 
 	//<return-statement> ::= 'return'[<expression>] ';'
 	std::optional<CompilationError> Analyser::analyseReturnStatement() {
-		bool isInt = isIntFun(fun_num - 1);
+		
+		bool isInt = isIntFun(index_in_con - 1);
 
 		_output._functions[fun_num - 1].SetFindRetExpression(true);	//表明有返回函数
 
@@ -883,9 +885,11 @@ namespace cc0 {
 			 	auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
 			 	_output._constants.emplace_back(tmp_constants);
 			 	pos = getPos(_output._constants, tmp_constants);
+				string_num += 1;
 			}
+			
 			_output._funN[fun_num - 1].emplace_back(Operation::loadc, pos, 0);
-			 _output._funN[fun_num - 1].emplace_back(Operation::sprint, 0, 0);
+			_output._funN[fun_num - 1].emplace_back(Operation::sprint, 0, 0);
 		}
 		else {
 			//<printable>
@@ -937,7 +941,10 @@ namespace cc0 {
 					auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
 					_output._constants.emplace_back(tmp_constants);
 					pos = getPos(_output._constants, tmp_constants);
+					string_num += 1;
+					index_in_con += 1;
 				}
+				
 				_output._funN[fun_num - 1].emplace_back(Operation::loadc, pos, 0);
 				_output._funN[fun_num - 1].emplace_back(Operation::sprint, 0, 0);
 			}

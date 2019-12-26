@@ -306,8 +306,9 @@ namespace cc0 {
 					ch = current_char.value();
 				}
 
-				std::string str_value;
-				ss >> str_value;
+	
+				auto str_value = ss.str();
+
 				int32_t out_c = str_value[0];
 
 				if(str_value.size() == 2 && str_value.at(0) == '\\') {
@@ -334,7 +335,38 @@ namespace cc0 {
 			}
 			case STRING_STATE: {
 				auto ch = current_char.value();
+				int32_t out_c;
 				while (ch != '\"') {
+					if(ch == '\\') {
+						auto str_tmp = nextChar();
+						if (str_tmp == '\\')
+							out_c = '\\';
+						if (str_tmp == '\'')
+							out_c = '\'';
+						if (str_tmp == '\"')
+							out_c = '\"';
+						if (str_tmp == 'n')
+							out_c = '\n';
+						if (str_tmp == 'r')
+							out_c = '\r';
+						if (str_tmp == 't')
+							out_c = '\t';
+						if (str_tmp == 'x') {
+							auto char1 = nextChar();
+							//读到了文件尾
+							if (!char1.has_value())
+								return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+
+							out_c = getValue(char1.value());
+							auto char2 = nextChar();
+							//读到了文件尾
+							if (!char2.has_value())
+								return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+							out_c = out_c * 16 + getValue(char2.value());
+						}
+						ch = out_c;
+					}
+					
 					ss << ch;
 
 					current_char = nextChar();
@@ -345,9 +377,7 @@ namespace cc0 {
 					ch = current_char.value();
 				}
 
-				std::string str_value;
-				ss >> str_value;
-				return std::make_pair(std::make_optional<Token>(TokenType::STRING_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
+				return std::make_pair(std::make_optional<Token>(TokenType::STRING_SIGN, ss.str(), pos, currentPos()), std::optional<CompilationError>());
 			}
 
 			case DIVISION_SIGN_AND_NOTE_STATE: {
@@ -626,5 +656,15 @@ namespace cc0 {
 	{
 		std::string hex = "0123456789abcdefABCDEF";
 		return charInString(c, hex);
+	}
+
+	int32_t Tokenizer::getValue(char c)
+	{
+		if (charInString(c, "0123456789"))
+			return c - '0';
+		else if (charInString(c, "abcdef"))
+			return c - 'a' + 10;
+		else
+			return c - 'A' + 10;
 	}
 }

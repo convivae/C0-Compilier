@@ -108,6 +108,7 @@ namespace cc0 {
         std::optional<TokenType> dealReservedWord(const std::string &s);
 		bool charInString(const char c, std::string s);
 		bool isHexCharacter(char c);
+		int32_t getValue(char c);
 	private:
 		std::istream& _rdr;
 		// 如果没有初始化，那么就 readAll
