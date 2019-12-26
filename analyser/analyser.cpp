@@ -225,17 +225,18 @@ namespace cc0 {
 			else {    //有等号，根据是否是const加入已经初始化的列表里面,并在栈上分配内存空间
 				if (type == TableType::START_TYPE) {
 					isConst ? addConstant(tmpIdentifier.value()) : addVariable(tmpIdentifier.value());
-					_output._start.emplace_back(Operation::snew, 1, 0);
+					//_output._start.emplace_back(Operation::snew, 1, 0);
 				}
 				else {
 					isConst ? addLocalConstant(tmpIdentifier.value()) : addLocalVariable(tmpIdentifier.value());
-					_output._funN[fun_num - 1].emplace_back(Operation::snew, 1, 0);
+					//_output._funN[fun_num - 1].emplace_back(Operation::snew, 1, 0);
 				}
 
 				//经过这一步就可以将上面的空间中填入具体的值
 				auto err = analyseExpression(type);
 				if (err.has_value())
 					return err;
+				
 			}
 		}
 		return {};

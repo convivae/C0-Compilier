@@ -163,6 +163,7 @@ namespace cc0 {
 		std::map<std::string, int32_t> _uninitialized_vars;
 		std::map<std::string, int32_t> _vars;
 		std::map<std::string, int32_t> _consts;
+		std::map<std::string, int32_t> _chars;
 
 		std::map<std::string, int32_t> _void_funs;
 		std::map<std::string, int32_t> _int_funs;
@@ -171,6 +172,7 @@ namespace cc0 {
 		std::map<std::string, int32_t> _local_consts;	//用于判断函数内的变量（包括参数）是否有重复，每次调用一个函数遇到参数时都要清空
 		std::map<std::string, int32_t> _local_vars;
 		std::map<std::string, int32_t> _local_uninitialized_vars;
+		std::map<std::string, int32_t> _local_chars;
 		
 		//下一个 token 在栈的偏移，此处需要对不同的栈有所区分
 		int32_t _nextTokenIndex;
@@ -178,5 +180,6 @@ namespace cc0 {
 		int32_t fun_num;	//在funN的位置
 		int32_t string_num;
 		int32_t index_in_con;	//在constants的位置
+		
 	};
 }

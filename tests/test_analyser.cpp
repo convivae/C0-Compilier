@@ -16,13 +16,11 @@ void assemble_and_run(std::stringstream& in);
 /*自己造的样例*/
 TEST_CASE("Test Base Analyser") {
 	std::string input =
-        "int A,B,C,D,E,F,G,H = 100;\n"
-        "\n"
-        "int fun(int a,int b)\n"
+        "int fun()\n"
         "{\n"
         "    int A = 2;\n"
         "    scan(A);\n"
-        "    while(){\n"
+        "    while(A < 100){\n"
         "        A = A + 1;\n"
         "        print(A);\n"
         "    }\n"
@@ -33,6 +31,7 @@ TEST_CASE("Test Base Analyser") {
         "{\n"
         "    int A;\n"
         "    scan(A);\n"
+        "    fun();\n"
         "    return 0;\n"
         "}";
 	std::stringstream ss;
