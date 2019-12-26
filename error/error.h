@@ -50,6 +50,10 @@ namespace cc0 {
 		ErrNeedMainFunction,
 		ErrDectedFloatingPointNumber,
 		ErrNeedStatement,
+		ErrFunctionCanNotBeVoid,
+		ErrIncompleteChar,
+		ErrIncompleteString,
+		ErrNotSupportNow,
 	};
 
 	class CompilationError final{

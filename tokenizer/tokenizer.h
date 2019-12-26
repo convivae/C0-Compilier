@@ -36,6 +36,13 @@ namespace cc0 {
 		 	DIVISION_SIGN_AND_NOTE_STATE,	//可能是除号也可能是注释的状态
 		 	EQUAL_SIGN_STATE,
 
+		 	//字符字面量
+		 	CHAR_STATE,
+
+		 	//字符串字面量
+			STRING_STATE,
+		 	
+
 		 	//比较符号
 		 	LESS_SIGN_STATE,
 		 	ABOVE_SIGN_STATE,

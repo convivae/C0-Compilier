@@ -126,6 +126,12 @@ namespace cc0 {
 					case '}':
 						current_state = DFAState::RIGHT_BRACE_STATE;
 						break;
+					case '\'':
+						current_state = DFAState::CHAR_STATE;
+						break;
+					case '\"':
+						current_state = DFAState::STRING_STATE;
+						break;
 						// 不接受的字符导致的不合法的状态
 					default:
 						invalid = true;
@@ -143,11 +149,11 @@ namespace cc0 {
 					return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(pos, ErrorCode::ErrInvalidInput));
 				}
 				// 如果读到的字符导致了状态的转移，说明它是一个token的第一个字符
-				if (current_state != DFAState::INITIAL_STATE && current_state != DFAState::DIVISION_SIGN_AND_NOTE_STATE) // ignore white spaces and notes
+				if (current_state != DFAState::INITIAL_STATE && current_state != DFAState::DIVISION_SIGN_AND_NOTE_STATE
+					&& current_state != CHAR_STATE && current_state != STRING_STATE) // ignore white spaces and notes
 					ss << ch; // 存储读到的字符
 				break;
 			}
-
 							  // 当前状态是整数时
 			case NUMBER_STATE: {
 				if (ss.str().at(0) == '0') {
@@ -285,6 +291,62 @@ namespace cc0 {
 					return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER, str_value, pos, currentPos()), std::optional<CompilationError>());
 				}
 				break;
+			}
+
+			case CHAR_STATE: {
+				auto ch = current_char.value();
+				while (ch != '\'') {
+					ss << ch;
+					
+					current_char = nextChar();
+					//读到了文件尾
+					if (!current_char.has_value())
+						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+					
+					ch = current_char.value();
+				}
+
+				std::string str_value;
+				ss >> str_value;
+				int32_t out_c = str_value[0];
+
+				if(str_value.size() == 2 && str_value.at(0) == '\\') {
+					auto str_tmp = str_value.at(1);
+					if (str_tmp == '\\')
+						out_c = '\\';
+					if (str_tmp == '\'')
+						out_c = '\'';
+					if (str_tmp == '\"')
+						out_c = '\"';
+					if (str_tmp == 'n')
+						out_c = '\n';
+					if (str_tmp == 'r')
+						out_c = '\r';
+					if (str_tmp == 't')
+						out_c = '\t';
+				}
+				else if(str_value.size() > 1) {
+					return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrIncompleteChar));
+				}
+
+				return std::make_pair(std::make_optional<Token>(TokenType::CHAR_SIGN, std::to_string(out_c), pos, currentPos()), std::optional<CompilationError>());
+			}
+			case STRING_STATE: {
+				auto ch = current_char.value();
+				while (ch != '\"') {
+					ss << ch;
+
+					current_char = nextChar();
+					//读到了文件尾
+					if (!current_char.has_value())
+						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+
+					ch = current_char.value();
+				}
+
+				std::string str_value;
+				ss >> str_value;
+				return std::make_pair(std::make_optional<Token>(TokenType::STRING_SIGN, str_value, pos, currentPos()), std::optional<CompilationError>());
 			}
 
 			case DIVISION_SIGN_AND_NOTE_STATE: {

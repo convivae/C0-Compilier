@@ -38,7 +38,8 @@ namespace cc0 {
 	public:
 		Analyser(std::vector<Token> v)
 			: _tokens(std::move(v)), _offset(0), _output({}), _current_pos(0, 0),_main_index(-1),
-			_uninitialized_vars({}), _vars({}), _consts({}), _nextTokenIndex(0), _nextLocalTokenIndex(0) {}
+			_uninitialized_vars({}), _vars({}), _consts({}), _nextTokenIndex(0), _nextLocalTokenIndex(0),
+		fun_num(0){}
 		Analyser(Analyser&&) = delete;
 		Analyser(const Analyser&) = delete;
 		Analyser& operator=(Analyser) = delete;
@@ -65,7 +66,7 @@ namespace cc0 {
 		std::optional<CompilationError> analyseStatementSeq();
 		std::optional<CompilationError> analyseStatement();
 		std::optional<CompilationError> analyseCondition(int32_t& label1);
-		std::optional<CompilationError> analyseFunctionCall(TableType type);
+		std::optional<CompilationError> analyseFunctionCall(TableType type, bool can_be_void_or_not);
 		std::optional<CompilationError> analyseExpressionList(TableType type, int32_t& paramSize);
 		std::optional<CompilationError> analyseAssignmentExpression();
 		std::optional<CompilationError> analyseScanStatement();
@@ -174,5 +175,6 @@ namespace cc0 {
 		//下一个 token 在栈的偏移，此处需要对不同的栈有所区分
 		int32_t _nextTokenIndex;
 		int32_t _nextLocalTokenIndex;
+		int32_t fun_num;
 	};
 }

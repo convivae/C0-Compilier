@@ -135,7 +135,6 @@ namespace cc0 {
 	// <initializer> ::= '=' < expression >
 	// TODO 生成汇编
 	std::optional<CompilationError> Analyser::analyseInitDeclaratorList(const bool isConst, TableType type) {
-		const int32_t fun_num = _output._constants.size();
 		// <init-declarator>
 		auto next = nextToken();
 		if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
@@ -215,7 +214,6 @@ namespace cc0 {
 					}
 					else {
 						addLocalUninitializedVariable(tmpIdentifier.value());
-						const int32_t fun_num = _output._constants.size();
 						_output._funN[fun_num - 1].emplace_back(Operation::snew, 1, 0);
 					}
 				}
@@ -227,7 +225,6 @@ namespace cc0 {
 				}
 				else {
 					isConst ? addLocalConstant(tmpIdentifier.value()) : addLocalVariable(tmpIdentifier.value());
-					const int32_t fun_num = _output._constants.size();
 					_output._funN[fun_num - 1].emplace_back(Operation::snew, 1, 0);
 				}
 
@@ -272,7 +269,7 @@ namespace cc0 {
 		auto pos = getPos(_output._constants, tmp_constants);
 
 		//新增一个函数体
-		const auto fun_num = _output._constants.size();
+		fun_num += 1;
 		_output._funN.resize(fun_num);
 
 		//确定main函数的位置
@@ -333,8 +330,6 @@ namespace cc0 {
 
 	// <parameter-declaration-list> :: =<parameter-declaration>{ ',' <parameter-declaration> }
 	std::optional<CompilationError> Analyser::analyseParameterDeclarationList(int32_t& paramSize) {
-		const auto fun_num = _output._constants.size();
-
 		//<parameter-declaration>
 		auto err = analyseParameterDeclaration();
 		if (err.has_value())
@@ -427,8 +422,6 @@ namespace cc0 {
 		next = nextToken();
 		if (!next.has_value() || next.value().GetType() != TokenType::RIGHT_BRACE)
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteBrackets);
-
-		const auto fun_num = _output._constants.size();
 
 		//没有返回语句
 		if (_output._functions[fun_num - 1].GetHasDetectedRetOrNot() == false) {
@@ -535,14 +528,13 @@ namespace cc0 {
 			else if (next.value().GetType() == TokenType::LEFT_PARENTHESIS) {
 				unreadToken();
 				unreadToken();
-				err = analyseFunctionCall(TableType::FUN_N_TYPE);
+				err = analyseFunctionCall(TableType::FUN_N_TYPE, true);
 				if (err.has_value())
 					return err;
 
 				//这里的function-call只是陈述语句，返回值是用不到的（感觉可以被优化掉）
 				//如果调用者不需要返回值，执行 pop 系列指令清除调用者栈帧得到的返回值
 				if(isIntFun(s)) {
-					const int32_t fun_num = _output._constants.size();
 					_output._funN[fun_num - 1].emplace_back(Operation::pop, 0, 0);
 				}
 
@@ -568,12 +560,11 @@ namespace cc0 {
 			return err;
 		}
 
-		const int32_t fun_num = _output._constants.size();
-
 		// [<relational-operator><expression>]
 		auto next = nextToken();
 		if (!next.has_value()) {    //说明没有可选部分
 			_output._funN[fun_num - 1].emplace_back(Operation::ipush, 0, 0);    //与0做对比
+			_output._funN[fun_num - 1].emplace_back(Operation::icmp, 0, 0);
 			_output._funN[fun_num - 1].emplace_back(Operation::je, 0, 0);        //此处的位置是 label1，需要回填
 			label1 = _output._funN[fun_num - 1].size() - 1;                        //记下label1的地址
 
@@ -585,6 +576,7 @@ namespace cc0 {
 			&& type != NOT_EQUAL_SIGN && type != EQUAL_EQUAL_SIGN) {//说明没有可选部分
 
 			_output._funN[fun_num - 1].emplace_back(Operation::ipush, 0, 0);    //与0做对比
+			_output._funN[fun_num - 1].emplace_back(Operation::icmp, 0, 0);
 			_output._funN[fun_num - 1].emplace_back(Operation::je, 0, 0);        //此处的位置是 label1，需要回填
 			label1 = _output._funN[fun_num - 1].size() - 1;                        //记下label1的地址
 
@@ -634,6 +626,8 @@ namespace cc0 {
 			label1 = _output._funN[fun_num - 1].size() - 1;
 
 			break;
+		default:
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrUnexpectedError);
 		}
 		return {};
 	}
@@ -643,7 +637,6 @@ namespace cc0 {
 	std::optional<CompilationError> Analyser::analyseConditionStatement() {
 		//回填地址
 		int32_t label1, label2;
-		const int32_t fun_num = _output._constants.size();
 
 		
 		//if语句和while语句中的return可能会影响到整个函数对于是否有return的判断，这里的return不能作数
@@ -709,7 +702,6 @@ namespace cc0 {
 	// <loop-statement> ::=
 	// 'while' '(' <condition> ')' <statement>
 	std::optional<CompilationError> Analyser::analyseLoopStatement() {
-		const int32_t fun_num = _output._constants.size();
 		// 回填地址
 		int32_t label1;
 
@@ -768,7 +760,6 @@ namespace cc0 {
 
 	//<return-statement> ::= 'return'[<expression>] ';'
 	std::optional<CompilationError> Analyser::analyseReturnStatement() {
-		const int32_t fun_num = _output._constants.size();
 		bool isInt = isIntFun(fun_num - 1);
 
 		_output._functions[fun_num - 1].SetFindRetExpression(true);	//表明有返回函数
@@ -841,20 +832,42 @@ namespace cc0 {
 		if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNoSemicolon);
 
+		// print最后会输出一个换行
+		_output._funN[fun_num - 1].emplace_back(Operation::printl, 0, 0);
+
 		return {};
 	}
 
 	// <printable-list>  ::= <printable> {',' <printable> }
-	// <printable> :: = <expression>
+	// <printable> ::= <expression> | <string - literal> | <char - literal>
 	std::optional<CompilationError> Analyser::analysePrintableList() {
-		const int32_t fun_num = _output._constants.size();
 
-		//<printable>
-		auto err = analyseExpression(TableType::FUN_N_TYPE);
-		if (err.has_value())
-			return err;
+		//判断
+		auto next = nextToken();
+		if(!next.has_value()) {
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+		}
+		if(next.value().GetType() == TokenType::CHAR_SIGN) {
+			auto num_tmp = std::stoll(next.value().GetValueString());
+			
+			_output._funN[fun_num - 1].emplace_back(Operation::bipush, num_tmp, 0);
+			_output._funN[fun_num - 1].emplace_back(Operation::cprint, 0, 0);
+		}
+		else if (next.value().GetType() == TokenType::STRING_SIGN) {
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotSupportNow);
+		}
+		else {
+			//<printable>
+			unreadToken();
+			auto err = analyseExpression(TableType::FUN_N_TYPE);
+			if (err.has_value())
+				return err;
 
-		_output._funN[fun_num - 1].emplace_back(Operation::iprint, 0, 0);
+			_output._funN[fun_num - 1].emplace_back(Operation::iprint, 0, 0);
+		}
+		
+
+		
 
 		// {',' <printable> }
 		while (true) {
@@ -865,10 +878,34 @@ namespace cc0 {
 				unreadToken();
 				return {};
 			}
-			err = analyseExpression(TableType::FUN_N_TYPE);
-			if (err.has_value())
-				return err;
-			_output._funN[fun_num - 1].emplace_back(Operation::iprint, 0, 0);
+
+			//一个print有多个<printable>时，<printable>之间输出一个空格(bipush 32 + cprint)
+			_output._funN[fun_num - 1].emplace_back(Operation::bipush, 32, 0);
+			_output._funN[fun_num - 1].emplace_back(Operation::cprint, 0, 0);
+			
+			
+			next = nextToken();
+			if (!next.has_value()) {
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompleteExpression);
+			}
+			if (next.value().GetType() == TokenType::CHAR_SIGN) {
+				auto num_tmp = std::stoll(next.value().GetValueString());
+
+				_output._funN[fun_num - 1].emplace_back(Operation::bipush, num_tmp, 0);
+				_output._funN[fun_num - 1].emplace_back(Operation::cprint, 0, 0);
+			}
+			else if (next.value().GetType() == TokenType::STRING_SIGN) {
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotSupportNow);
+			}
+			else {
+				//<printable>
+				unreadToken();
+				auto err = analyseExpression(TableType::FUN_N_TYPE);
+				if (err.has_value())
+					return err;
+
+				_output._funN[fun_num - 1].emplace_back(Operation::iprint, 0, 0);
+			}
 		}
 
 		return {};
@@ -876,7 +913,6 @@ namespace cc0 {
 
 	// <scan-statement> ::= 'scan' '(' <identifier> ')' ';'
 	std::optional<CompilationError> Analyser::analyseScanStatement() {
-		const int32_t fun_num = _output._constants.size();
 
 		// scan
 		auto next = nextToken();
@@ -948,7 +984,6 @@ namespace cc0 {
 	// <assignment-expression> ::= <identifier><assignment-operator><expression>
 	// <assignment-operator> ::= '='
 	std::optional<CompilationError> Analyser::analyseAssignmentExpression() {
-		const int32_t fun_num = _output._constants.size();
 		// <identifier>
 		auto next = nextToken();
 		if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
@@ -1021,7 +1056,6 @@ namespace cc0 {
 	// 	<multiplicative-expression>{ <additive-operator><multiplicative-expression> }
 	// 	<additive-operator>       ::= '+' | '-'
 	std::optional<CompilationError> Analyser::analyseAdditiveExpression(TableType type) {
-		const int32_t fun_num = _output._constants.size();
 		bool isPlus = false;    //判断是加号还是减号
 
 		auto err = analyseMultiplicativeExpression(type);
@@ -1064,7 +1098,6 @@ namespace cc0 {
 	// <multiplicative-expression> ::=
 	// <unary-expression>{<multiplicative-operator><unary-expression>}
 	std::optional<CompilationError> Analyser::analyseMultiplicativeExpression(TableType type) {
-		const int32_t fun_num = _output._constants.size();
 		bool isMul = false;    //判断是乘号还是除号
 
 		auto err = analyseUnaryExpression(type);
@@ -1111,7 +1144,6 @@ namespace cc0 {
 	//<unary-expression> ::= [<unary-operator>]<primary-expression>
 	//<unary-operator>   ::= '+' | '-'
 	std::optional<CompilationError> Analyser::analyseUnaryExpression(TableType type) {
-		const int32_t fun_num = _output._constants.size();
 		bool isNeg = false;    //判断是不是负数
 
 		//[<unary-operator>]
@@ -1147,7 +1179,6 @@ namespace cc0 {
 	// 	| <integer-literal>
 	// 	| <function-call>
 	std::optional<CompilationError> Analyser::analysePrimaryExpression(TableType type) {
-		const int32_t fun_num = _output._constants.size();
 		int32_t num_tmp;
 
 		auto next = nextToken();
@@ -1218,7 +1249,7 @@ namespace cc0 {
 			//是 <function-call>
 			unreadToken();
 			unreadToken();
-			err = analyseFunctionCall(type);
+			err = analyseFunctionCall(type,false);
 			if (err.has_value())
 				return err;
 			break;
@@ -1242,7 +1273,7 @@ namespace cc0 {
 
 	// <function-call> :: =
 	// 	<identifier> '('[<expression-list>] ')'
-	std::optional<CompilationError> Analyser::analyseFunctionCall(TableType type) {
+	std::optional<CompilationError> Analyser::analyseFunctionCall(TableType type, bool can_be_void_or_not) {
 		//<identifier>
 		auto next = nextToken();
 		if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
@@ -1254,10 +1285,13 @@ namespace cc0 {
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrFunctionNotExist);
 		}
 
+		if(isVoidFun(s) && can_be_void_or_not == false) {
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrFunctionCanNotBeVoid);
+		}
+
 		//因为参数只能是int型的，所以函数表中有他的参数个数信息
 		auto _expect_param_num = getParamsNum(s);
 		auto _fun_index = getFunctionIndexInConstants(s);
-		const int32_t fun_num = _output._constants.size();
 
 		// (
 		next = nextToken();

@@ -21,6 +21,10 @@ namespace cc0 {
         MULTIPLICATION_SIGN,
         DIVISION_SIGN,
 
+		//char和string
+		CHAR_SIGN,
+		STRING_SIGN,
+
 		//标点符号
 		SEMICOLON,
 		COMMA,

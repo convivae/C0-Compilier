@@ -108,6 +108,18 @@ namespace fmt {
 			case cc0::ErrNeedStatement:
 				name = "Need a statement here";
 				break;
+			case cc0::ErrFunctionCanNotBeVoid:
+				name = "Function can't be void.";
+				break;
+			case cc0::ErrIncompleteChar:
+				name = "The char value is incorrect.";
+				break;
+			case cc0::ErrIncompleteString:
+				name = "The string value is incorrect.";
+				break;
+			case cc0::ErrNotSupportNow:
+				name = "The string value is not support now.";
+				break;
 			}
 			return format_to(ctx.out(), name);
 		}
@@ -273,6 +285,12 @@ namespace fmt {
 				break;
 			case cc0::SCAN:
 				name = "Scan";
+				break;
+			case cc0::CHAR_SIGN:
+				name = "Char";
+				break;
+			case cc0::STRING_SIGN:
+				name = "String";
 				break;
 			}
 			return format_to(ctx.out(), name);
