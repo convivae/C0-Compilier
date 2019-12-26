@@ -324,6 +324,7 @@ namespace cc0 {
 						out_c = '\r';
 					if (str_tmp == 't')
 						out_c = '\t';
+					
 				}
 				else if(str_value.size() > 1) {
 					return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrIncompleteChar));

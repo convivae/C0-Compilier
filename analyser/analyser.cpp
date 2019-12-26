@@ -263,10 +263,23 @@ namespace cc0 {
 			addIntFunctions(next.value());
 		}
 
-		// 添加到常量表
-		auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
-		_output._constants.emplace_back(tmp_constants);
-		auto pos = getPos(_output._constants, tmp_constants);
+		auto findIt = false;
+		auto pos = 0;
+		auto source = _output._constants;
+		
+		for (auto iter = source.begin(); iter != source.end(); ++iter) {
+			if (std::get<0>(iter->GetValue()) == next.value().GetValueString()) {
+				pos = iter - source.begin();
+				findIt = true;
+				break;
+			}
+		}
+		if (!findIt) {
+			// 添加到常量表
+			auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
+			_output._constants.emplace_back(tmp_constants);
+			pos = getPos(_output._constants, tmp_constants);
+		}
 
 		//新增一个函数体
 		fun_num += 1;
@@ -841,7 +854,10 @@ namespace cc0 {
 	// <printable-list>  ::= <printable> {',' <printable> }
 	// <printable> ::= <expression> | <string - literal> | <char - literal>
 	std::optional<CompilationError> Analyser::analysePrintableList() {
-
+		auto source = _output._constants;
+		auto pos = 0;
+		bool findIt = false;
+		
 		//判断
 		auto next = nextToken();
 		if(!next.has_value()) {
@@ -854,7 +870,22 @@ namespace cc0 {
 			_output._funN[fun_num - 1].emplace_back(Operation::cprint, 0, 0);
 		}
 		else if (next.value().GetType() == TokenType::STRING_SIGN) {
-			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotSupportNow);
+			findIt = false;
+			for (auto iter = source.begin(); iter != source.end(); ++iter) {
+				if (std::get<0>(iter->GetValue()) == next.value().GetValueString()) {
+					pos = iter - source.begin();
+					findIt = true;
+					break;
+				}
+			}
+			if(!findIt) {
+			 	// 添加到常量表
+			 	auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
+			 	_output._constants.emplace_back(tmp_constants);
+			 	pos = getPos(_output._constants, tmp_constants);
+			}
+			_output._funN[fun_num - 1].emplace_back(Operation::loadc, pos, 0);
+			 _output._funN[fun_num - 1].emplace_back(Operation::sprint, 0, 0);
 		}
 		else {
 			//<printable>
@@ -865,8 +896,6 @@ namespace cc0 {
 
 			_output._funN[fun_num - 1].emplace_back(Operation::iprint, 0, 0);
 		}
-		
-
 		
 
 		// {',' <printable> }
@@ -895,7 +924,22 @@ namespace cc0 {
 				_output._funN[fun_num - 1].emplace_back(Operation::cprint, 0, 0);
 			}
 			else if (next.value().GetType() == TokenType::STRING_SIGN) {
-				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNotSupportNow);
+				findIt = false;
+				for (auto iter = source.begin(); iter != source.end(); ++iter) {
+					if (std::get<0>(iter->GetValue()) == next.value().GetValueString()) {
+						pos = iter - source.begin();
+						findIt = true;
+						break;
+					}
+				}
+				if (!findIt) {
+					// 添加到常量表
+					auto tmp_constants = Constants(Type::STRING_TYPE, next.value().GetValueString());
+					_output._constants.emplace_back(tmp_constants);
+					pos = getPos(_output._constants, tmp_constants);
+				}
+				_output._funN[fun_num - 1].emplace_back(Operation::loadc, pos, 0);
+				_output._funN[fun_num - 1].emplace_back(Operation::sprint, 0, 0);
 			}
 			else {
 				//<printable>
