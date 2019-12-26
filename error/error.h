@@ -54,6 +54,9 @@ namespace cc0 {
 		ErrIncompleteChar,
 		ErrIncompleteString,
 		ErrNotSupportNow,
+		ErrIncompleteNotes,
+		ErrIncompletePrimaryExpression,
+		ErrDuplicateMainFunction,
 	};
 
 	class CompilationError final{

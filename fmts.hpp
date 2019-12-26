@@ -109,7 +109,7 @@ namespace fmt {
 				name = "Need a statement here";
 				break;
 			case cc0::ErrFunctionCanNotBeVoid:
-				name = "Function can't be void.";
+				name = "Void Function can't be computed.";
 				break;
 			case cc0::ErrIncompleteChar:
 				name = "The char value is incorrect.";
@@ -119,6 +119,15 @@ namespace fmt {
 				break;
 			case cc0::ErrNotSupportNow:
 				name = "The string value is not support now.";
+				break;
+			case cc0::ErrIncompleteNotes:
+				name = "The note is incomplete";
+				break;
+			case cc0::ErrIncompletePrimaryExpression:
+				name = "The Primary Expression is incomplete";
+				break;
+			case cc0::ErrDuplicateMainFunction:
+				name = "The main function is duplicate";
 				break;
 			}
 			return format_to(ctx.out(), name);

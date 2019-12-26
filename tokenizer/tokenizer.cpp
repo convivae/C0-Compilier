@@ -355,13 +355,13 @@ namespace cc0 {
 							auto char1 = nextChar();
 							//读到了文件尾
 							if (!char1.has_value())
-								return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+								return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrIncompleteString));
 
 							out_c = getValue(char1.value());
 							auto char2 = nextChar();
 							//读到了文件尾
 							if (!char2.has_value())
-								return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+								return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrIncompleteString));
 							out_c = out_c * 16 + getValue(char2.value());
 						}
 						ch = out_c;
@@ -372,7 +372,7 @@ namespace cc0 {
 					current_char = nextChar();
 					//读到了文件尾
 					if (!current_char.has_value())
-						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+						return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrIncompleteString));
 
 					ch = current_char.value();
 				}
@@ -388,7 +388,7 @@ namespace cc0 {
 
 						//读到了文件尾
 						if (!current_char.has_value())
-							return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+							return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrIncompleteNotes));
 						ch = current_char.value();
 					}
 					// 这里 \n 被舍弃
@@ -400,7 +400,7 @@ namespace cc0 {
 
 						//读到了文件尾
 						if (!current_char.has_value())
-							return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrEOF));
+							return std::make_pair(std::optional<Token>(), std::make_optional<CompilationError>(0, 0, ErrIncompleteNotes));
 						ch = current_char.value();
 
 						if(detectedStar == true) {

@@ -195,7 +195,11 @@ namespace cc0 {
 			next = nextToken();
 			if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
 				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
-			if (isDeclared(next.value().GetValueString()))
+			
+			//是否重复声明，分两种情况讨论
+			if (type == TableType::START_TYPE && isDeclared(next.value().GetValueString()))
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrDuplicateDeclaration);
+			if (type == TableType::FUN_N_TYPE && isLocalDeclared(next.value().GetValueString()))
 				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrDuplicateDeclaration);
 
 			tmpIdentifier = next;    //此时不知道后面有没有等号，还不知道要把标识符添加到哪里
@@ -291,7 +295,7 @@ namespace cc0 {
 			if (_main_index == -1)
 				_main_index = pos;
 			else {    //error 多个main函数
-				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrDuplicateDeclaration);
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrDuplicateMainFunction);
 			}
 		}
 
@@ -383,13 +387,23 @@ namespace cc0 {
 
 		// <type-specifier><identifier>
 		if (!next.has_value() ||
-			(next.value().GetType() != TokenType::VOID && next.value().GetType() != TokenType::INT))
+			(next.value().GetType() != TokenType::VOID && next.value().GetType() != TokenType::INT && next.value().GetType() != CHAR))
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedTypeSpecifier);
 
 		if (next.value().GetType() == TokenType::VOID) { //error
 			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrInvalidVoidParameterDeclaration);
 		}
 		else if (next.value().GetType() == TokenType::INT) {
+			next = nextToken();
+			if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER) {
+				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
+			}
+			//TODO 需要加入到相应的函数表（fun_n）中,参数的值从栈中获取
+			// 参数列表中的参数，可以视为函数内部的参数
+			isConst ? addLocalConstant(next.value()) : addLocalVariable(next.value());
+		}
+
+		else if(next.value().GetType() == TokenType::CHAR) {
 			next = nextToken();
 			if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER) {
 				return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrNeedIdentifier);
@@ -1317,7 +1331,7 @@ namespace cc0 {
 			}
 			break;
 		default:
-			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrUnexpectedError);
+			return std::make_optional<CompilationError>(_current_pos, ErrorCode::ErrIncompletePrimaryExpression);
 		}
 		return {};
 	}

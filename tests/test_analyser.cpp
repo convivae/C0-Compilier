@@ -16,21 +16,24 @@ void assemble_and_run(std::stringstream& in);
 /*自己造的样例*/
 TEST_CASE("Test Base Analyser") {
 	std::string input =
-        "void hanoi(int n, int a, int b, int c) {\n"
-        "\tif (n == 1) {\n"
-        "\t\tprint(a, \"->\", c);\n"
-        "\t}\n"
-        "\telse {\n"
-        "\t\thanoi(n-1, a, c, b);\n"
-        "\t\tprint(a, \"->\", c);\n"
-        "\t\thanoi(n-1, b, a, c);\n"
-        "\t\t\n"
-        "\t}\n"
+        "int A,B,C,D,E,F,G,H = 100;\n"
+        "\n"
+        "int fun(int a,int b)\n"
+        "{\n"
+        "    int A = 2;\n"
+        "    scan(A);\n"
+        "    while(){\n"
+        "        A = A + 1;\n"
+        "        print(A);\n"
+        "    }\n"
+        "    return A;\n"
         "}\n"
         "\n"
-        "int main() {\n"
-        "\thanoi(3, 111, 222, 333);\n"
-        "\treturn 0;\n"
+        "int main()\n"
+        "{\n"
+        "    int A;\n"
+        "    scan(A);\n"
+        "    return 0;\n"
         "}";
 	std::stringstream ss;
 	ss.str(input);
