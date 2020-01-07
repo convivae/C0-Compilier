@@ -18,9 +18,9 @@ TEST_CASE("Test Base Analyser") {
 	std::string input =
         "int fun()\n"
         "{\n"
-        "    int A = 2;\n"
+        "    int A;\n"
         "    scan(A);\n"
-        "    while(A < 100){\n"
+        "    while(A < 10){\n"
         "        A = A + 1;\n"
         "        print(A);\n"
         "    }\n"
